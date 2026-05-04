@@ -1,0 +1,389 @@
+import { useCallback, useEffect, useRef, useState, type MutableRefObject, type RefObject } from "react";
+import { useLenis } from "lenis/react";
+
+import { useMaxWidth } from "@/hooks/use-breakpoint";
+
+const STACK_CONFIG = {
+  itemDistance: 100,
+  itemScale: 0.015,
+  itemStackDistance: 18,
+  stackPosition: 0.08,
+  scaleEndPosition: 0.05,
+  baseScale: 0.92,
+};
+
+export function useSelectedWorksScroll() {
+  const cardsRef = useRef<HTMLElement[]>([]);
+  const cardOffsetsRef = useRef<number[]>([]);
+  const endOffsetRef = useRef<number>(0);
+  const stackInnerRef = useRef<HTMLDivElement>(null);
+  const stackInnerTopRef = useRef<number>(0);
+  const voidContainerRef = useRef<HTMLDivElement>(null);
+  const kineticWheelRef = useRef<HTMLDivElement>(null);
+  const threadPathRef = useRef<SVGPathElement>(null);
+  const figureGroupRef = useRef<SVGGElement>(null);
+  const threadLenRef = useRef(0);
+  const textAnalyzeRef = useRef<SVGTextElement>(null);
+  const textDesignRef = useRef<SVGTextElement>(null);
+  const textBuildRef = useRef<SVGTextElement>(null);
+  const textDeliverRef = useRef<SVGTextElement>(null);
+
+  const [ready, setReady] = useState(false);
+  const isMobile = useMaxWidth(1024);
+
+  useLenis(({ scroll }) => {
+    if (!ready) return;
+
+    const cards = cardsRef.current;
+    const cardOffsets = cardOffsetsRef.current;
+    const endElementTop = endOffsetRef.current;
+    const stackInnerTop = stackInnerTopRef.current;
+
+    if (!cards.length || !cardOffsets.length) return;
+
+    const containerHeight = window.innerHeight;
+    const firstCardHeight = cards[0].offsetHeight;
+
+    const stackPositionPx = (containerHeight - firstCardHeight) / 2;
+    const scaleEndPositionPx =
+      stackPositionPx - (STACK_CONFIG.stackPosition - STACK_CONFIG.scaleEndPosition) * containerHeight;
+
+    const lastCardTop = cardOffsets[cards.length - 1];
+    const triggerEndLast = lastCardTop - scaleEndPositionPx;
+    const voidStart = triggerEndLast;
+    const voidDistance = containerHeight * 1.2;
+    const voidProgress = getVoidProgress(scroll, voidStart, voidDistance);
+
+    cards.forEach((card, index) => {
+      const cardTop = cardOffsets[index];
+      const triggerStart = cardTop - stackPositionPx - STACK_CONFIG.itemStackDistance * index;
+      const triggerEnd = cardTop - scaleEndPositionPx;
+      const pinEnd = Math.max(endElementTop - containerHeight * 0.5, voidStart + voidDistance);
+      const scaleProgress = getScaleProgress(scroll, triggerStart, triggerEnd);
+      const targetScale = STACK_CONFIG.baseScale + index * STACK_CONFIG.itemScale;
+      const scale = Number((1 - scaleProgress * (1 - targetScale)).toFixed(4));
+      const translateY = getCardTranslateY(scroll, cardTop, triggerStart, pinEnd, stackPositionPx, index);
+
+      card.style.transform = `translate3d(0, ${Math.round(translateY * 10) / 10}px, 0) scale(${scale})`;
+    });
+
+    updateVoidContainer({
+      containerHeight,
+      isMobile,
+      scroll,
+      stackInnerRef,
+      stackInnerTop,
+      voidContainerRef,
+      voidProgress,
+    });
+
+    updateMobileThread({
+      figureGroupRef,
+      isMobile,
+      textAnalyzeRef,
+      textBuildRef,
+      textDeliverRef,
+      textDesignRef,
+      threadLenRef,
+      threadPathRef,
+      voidProgress,
+    });
+
+    updateKineticWheel({
+      containerHeight,
+      endElementTop,
+      figureGroupRef,
+      isMobile,
+      kineticWheelRef,
+      scroll,
+      voidProgress,
+    });
+  });
+
+  const cachePositions = useCallback(() => {
+    setReady(false);
+    const cards = Array.from(document.querySelectorAll(".scroll-stack-card")) as HTMLElement[];
+    cardsRef.current = cards;
+    cards.forEach((card) => {
+      card.style.transform = "";
+    });
+
+    if (voidContainerRef.current) {
+      voidContainerRef.current.style.transform = "";
+      voidContainerRef.current.style.transformOrigin = "";
+    }
+
+    if (kineticWheelRef.current) kineticWheelRef.current.style.transform = "";
+
+    if (threadPathRef.current && isMobile) {
+      try {
+        const len = threadPathRef.current.getTotalLength();
+        if (len > 0) {
+          threadLenRef.current = len;
+          threadPathRef.current.style.strokeDasharray = `${len}`;
+          threadPathRef.current.style.strokeDashoffset = `${len}`;
+        }
+      } catch {
+        threadLenRef.current = 0;
+      }
+    }
+
+    const scrollY = window.scrollY;
+    cardOffsetsRef.current = cards.map((card) => card.getBoundingClientRect().top + scrollY);
+
+    const endElement = document.querySelector(".scroll-stack-end") as HTMLElement;
+    if (endElement) endOffsetRef.current = endElement.getBoundingClientRect().top + scrollY;
+    if (stackInnerRef.current) stackInnerTopRef.current = stackInnerRef.current.getBoundingClientRect().top + scrollY;
+
+    setReady(true);
+  }, [isMobile]);
+
+  const calculateAndRender = useCallback(() => {
+    cachePositions();
+  }, [cachePositions]);
+
+  useEffect(() => {
+    const cards = Array.from(document.querySelectorAll(".scroll-stack-card")) as HTMLElement[];
+
+    cards.forEach((card, index) => {
+      if (index < cards.length - 1) card.style.marginBottom = `${STACK_CONFIG.itemDistance}px`;
+      card.style.willChange = "transform";
+      card.style.transformOrigin = "top center";
+    });
+
+    const resizeObserver = new ResizeObserver(() => calculateAndRender());
+    cards.forEach((card) => resizeObserver.observe(card));
+    calculateAndRender();
+
+    const initTimer = setTimeout(calculateAndRender, 100);
+    window.addEventListener("resize", calculateAndRender, { passive: true });
+
+    return () => {
+      clearTimeout(initTimer);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", calculateAndRender);
+    };
+  }, [calculateAndRender]);
+
+  return {
+    isMobile,
+    stackInnerRef,
+    voidContainerRef,
+    kineticWheelRef,
+    threadPathRef,
+    figureGroupRef,
+    textAnalyzeRef,
+    textDesignRef,
+    textBuildRef,
+    textDeliverRef,
+  };
+}
+
+function getVoidProgress(scroll: number, voidStart: number, voidDistance: number) {
+  if (scroll <= voidStart) return 0;
+  return clamp((scroll - voidStart) / voidDistance);
+}
+
+function getScaleProgress(scroll: number, triggerStart: number, triggerEnd: number) {
+  if (scroll >= triggerEnd) return 1;
+  if (scroll <= triggerStart) return 0;
+  return clamp((scroll - triggerStart) / (triggerEnd - triggerStart));
+}
+
+function getCardTranslateY(
+  scroll: number,
+  cardTop: number,
+  pinStart: number,
+  pinEnd: number,
+  stackPositionPx: number,
+  index: number,
+) {
+  if (scroll >= pinStart && scroll <= pinEnd) {
+    return scroll - cardTop + stackPositionPx + STACK_CONFIG.itemStackDistance * index;
+  }
+
+  if (scroll > pinEnd) {
+    return pinEnd - cardTop + stackPositionPx + STACK_CONFIG.itemStackDistance * index;
+  }
+
+  return 0;
+}
+
+function updateVoidContainer({
+  containerHeight,
+  isMobile,
+  scroll,
+  stackInnerRef,
+  stackInnerTop,
+  voidContainerRef,
+  voidProgress,
+}: {
+  containerHeight: number;
+  isMobile: boolean;
+  scroll: number;
+  stackInnerRef: RefObject<HTMLDivElement>;
+  stackInnerTop: number;
+  voidContainerRef: RefObject<HTMLDivElement>;
+  voidProgress: number;
+}) {
+  const voidContainer = voidContainerRef.current;
+  const stackInner = stackInnerRef.current;
+  if (!voidContainer || !stackInner) return;
+
+  const originY = scroll + containerHeight / 2 - stackInnerTop;
+  stackInner.style.perspectiveOrigin = `50% ${originY}px`;
+  stackInner.style.perspective = "1500px";
+
+  if (voidProgress <= 0) {
+    voidContainer.style.transformOrigin = "";
+    voidContainer.style.transform = "";
+    voidContainer.style.opacity = "1";
+    voidContainer.style.visibility = "visible";
+    return;
+  }
+
+  if (isMobile) {
+    const fadeOutProgress = Math.min(voidProgress / 0.25, 1);
+    const currentOpacity = 1 - fadeOutProgress;
+
+    voidContainer.style.transformOrigin = `50% ${originY}px`;
+    voidContainer.style.transform = "translate3d(0, 0, 0) scale(1)";
+    voidContainer.style.opacity = Math.max(0, currentOpacity).toFixed(3);
+    voidContainer.style.visibility = fadeOutProgress >= 1 ? "hidden" : "visible";
+    return;
+  }
+
+  const easeScale = Math.pow(voidProgress, 1.5);
+  const currentZ = -easeScale * 3000;
+  const currentScale = 1 - easeScale;
+  const currentOpacity = 1 - Math.pow(voidProgress, 2.5);
+
+  voidContainer.style.transformOrigin = `50% ${originY}px`;
+  voidContainer.style.transform = `translate3d(0, 0, ${currentZ}px) scale(${Math.max(0, currentScale).toFixed(4)})`;
+  voidContainer.style.opacity = Math.max(0, currentOpacity).toFixed(3);
+  voidContainer.style.visibility = voidProgress >= 1 ? "hidden" : "visible";
+}
+
+function updateMobileThread({
+  figureGroupRef,
+  isMobile,
+  textAnalyzeRef,
+  textBuildRef,
+  textDeliverRef,
+  textDesignRef,
+  threadLenRef,
+  threadPathRef,
+  voidProgress,
+}: {
+  figureGroupRef: RefObject<SVGGElement>;
+  isMobile: boolean;
+  textAnalyzeRef: RefObject<SVGTextElement>;
+  textBuildRef: RefObject<SVGTextElement>;
+  textDeliverRef: RefObject<SVGTextElement>;
+  textDesignRef: RefObject<SVGTextElement>;
+  threadLenRef: MutableRefObject<number>;
+  threadPathRef: RefObject<SVGPathElement>;
+  voidProgress: number;
+}) {
+  const thread = threadPathRef.current;
+  const threadLen = threadLenRef.current;
+  if (!thread || threadLen <= 0 || !isMobile) return;
+
+  const drawP = voidProgress > 0.2 ? clamp((voidProgress - 0.2) / 0.8) : 0;
+  thread.style.strokeDasharray = `${threadLen}`;
+  thread.style.strokeDashoffset = `${(threadLen * (1 - drawP)).toFixed(2)}`;
+
+  animateText(textAnalyzeRef, drawP, 0.04);
+  animateText(textDesignRef, drawP, 0.2);
+  animateText(textBuildRef, drawP, 0.4);
+  animateText(textDeliverRef, drawP, 0.6);
+
+  if (figureGroupRef.current && voidProgress < 0.8) {
+    figureGroupRef.current.style.opacity = "1";
+  }
+}
+
+function updateKineticWheel({
+  containerHeight,
+  endElementTop,
+  figureGroupRef,
+  isMobile,
+  kineticWheelRef,
+  scroll,
+  voidProgress,
+}: {
+  containerHeight: number;
+  endElementTop: number;
+  figureGroupRef: RefObject<SVGGElement>;
+  isMobile: boolean;
+  kineticWheelRef: RefObject<HTMLDivElement>;
+  scroll: number;
+  voidProgress: number;
+}) {
+  const kineticWheel = kineticWheelRef.current;
+  if (!kineticWheel) return;
+
+  if (scroll > endElementTop + containerHeight * 1.4) {
+    kineticWheel.style.display = "none";
+    kineticWheel.style.visibility = "hidden";
+    return;
+  }
+
+  if (voidProgress <= 0) {
+    kineticWheel.style.display = "block";
+    kineticWheel.style.opacity = "0";
+    kineticWheel.style.visibility = "hidden";
+
+    if (isMobile) {
+      kineticWheel.style.transform = "translate3d(0, 0, 0)";
+      if (figureGroupRef.current) figureGroupRef.current.style.opacity = "1";
+    } else {
+      kineticWheel.style.transform = "rotate(180deg)";
+    }
+    return;
+  }
+
+  kineticWheel.style.display = "block";
+  kineticWheel.style.visibility = "visible";
+
+  if (isMobile) {
+    const figOpacity =
+      voidProgress <= 0.25
+        ? 0.5 * (voidProgress / 0.25)
+        : voidProgress <= 0.5
+          ? 0.5 + 0.5 * ((voidProgress - 0.25) / 0.25)
+          : 1;
+
+    kineticWheel.style.opacity = figOpacity.toFixed(3);
+    kineticWheel.style.transform = "translate3d(0, 0, 0)";
+
+    if (figureGroupRef.current && voidProgress >= 0.8) {
+      const textFade = 1 - (voidProgress - 0.8) / 0.2;
+      figureGroupRef.current.style.opacity = Math.max(0, textFade).toFixed(3);
+    }
+    return;
+  }
+
+  kineticWheel.style.opacity = Math.min(voidProgress * 4, 1).toFixed(3);
+  kineticWheel.style.transformOrigin = "50% 100%";
+  kineticWheel.style.transform = `rotate(${180 * (1 - voidProgress)}deg)`;
+}
+
+function animateText(ref: RefObject<SVGTextElement>, drawProgress: number, targetProgress: number) {
+  if (!ref.current) return;
+
+  const threshold = 0.15;
+  const dist = Math.abs(drawProgress - targetProgress);
+  const intensity = dist < threshold ? 1 - dist / threshold : 0;
+  const opacity = 0.3 + 0.7 * intensity;
+  const scale = 1 + 0.05 * intensity;
+
+  ref.current.style.opacity = opacity.toFixed(2);
+  ref.current.style.transform = `scale(${scale})`;
+  ref.current.style.transformOrigin = "center";
+  ref.current.style.transformBox = "fill-box";
+}
+
+function clamp(value: number) {
+  return Math.min(Math.max(value, 0), 1);
+}
