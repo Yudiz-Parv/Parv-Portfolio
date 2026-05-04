@@ -12,10 +12,10 @@ import type {
 
 export const BRAND = {
   name: "PARV",
-  legalName: "Mahesh P Pai",
-  role: "Full Stack Engineer",
-  location: "Kerala, India [Lat: 9.7, Long: 76.5]",
-  email: "maheshpailinked@gmail.com",
+  legalName: "Parv Gosani",
+  role: "Frontend Developer",
+  location: "Gujarat, India [Lat: 23.0, Long: 72.5]",
+  email: "parvgosani107@gmail.com",
   year: "2026",
 };
 
@@ -27,17 +27,17 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const SOCIAL_LINKS: SocialLink[] = [
-  { label: "GitHub", icon: "github", href: "https://github.com/MAHESHPPAI" },
-  { label: "LinkedIn", icon: "linkedin", href: "https://www.linkedin.com/in/mahesh-p-pai-b0987b2a8/" },
-  { label: "Instagram", icon: "instagram", href: "https://www.instagram.com/mahesh_3.14_/" },
+  { label: "GitHub", icon: "github", href: "https://github.com/Parv3008" },
+  { label: "LinkedIn", icon: "linkedin", href: "https://www.linkedin.com/in/parv-gosani" },
+  { label: "Instagram", icon: "instagram", href: "https://www.instagram.com/parvgosani" },
   { label: "Email", icon: "mail", href: `mailto:${BRAND.email}` },
 ];
 
 export const HERO_COPY = {
-  availability: "Available for work",
-  headline: "Driven\nby logic",
+  availability: "Open to collaborate",
+  headline: "Interfaces\nthat feel right",
   summary:
-    "Building robust software, automating the complex and focused on transforming static systems into intelligent ones.",
+    "I am a frontend developer obsessed with clean code, AI-assisted workflows, and shipping things that actually feel alive. My focus is on turning complex product ideas into motion-led interfaces that remain fast, readable, and production-safe.",
   cta: "Get in touch",
 };
 
@@ -49,8 +49,8 @@ export const ABOUT_GROUPS: AboutGroup[] = [
     label: "Education",
     entries: [
       {
-        title: "Indian Institute of Information Technology, Kottayam",
-        subtitle: "B.Tech, Computer Science & Engineering (2023-2027)",
+        title: "Navrachana University, Vadodara, Gujarat",
+        subtitle: "B.Tech, Computer Science & Engineering (2021-2025)",
       },
     ],
   },
@@ -59,12 +59,8 @@ export const ABOUT_GROUPS: AboutGroup[] = [
     label: "Experience",
     entries: [
       {
-        title: "aiRender Technologies",
-        subtitle: "Full Stack Developer (May 2025 - May 2026)",
-      },
-      {
-        title: "Infosys Springboard",
-        subtitle: "Web Development Intern (Oct 2024 - Dec 2024)",
+        title: "Yudiz Solutions Pvt. Ltd.",
+        subtitle: "Frontend Developer (January 2026 - Present)",
       },
     ],
   },
@@ -72,8 +68,7 @@ export const ABOUT_GROUPS: AboutGroup[] = [
     number: "03",
     label: "Focus",
     entries: [
-      { title: "Software Engineering Architecture" },
-      { title: "Artificial Intelligence & Process Automation" },
+      { title: "Fast, readable code & AI-assisted workflows", subtitle: "Production-safe interfaces & Motion-led animations" }
     ],
   },
 ];

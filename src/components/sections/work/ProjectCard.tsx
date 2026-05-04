@@ -8,7 +8,7 @@ interface ProjectCardProps {
 const ProjectCard = ({ project }: ProjectCardProps) => (
   <StarBorder
     as="div"
-    className="scroll-stack-card"
+    className="scroll-stack-card w-full max-w-none"
     color="#00f2fe, #4facfe, #7000ff"
     speed="8s"
   >
