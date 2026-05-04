@@ -5,7 +5,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 type Theme = "dark" | "light" | "custom";
 
@@ -34,10 +34,9 @@ type ResolvedColors = {
   trackColor: string;
 };
 
-const digits = Array.from({ length: 10 }, (_, index) => index);
-const onesDigits = Array.from({ length: 100 }, (_, index) => index % 10);
+const counterSteps = [0, 18, 42, 67, 86, 99];
 const exitEase = [0.76, 0, 0.24, 1] as [number, number, number, number];
-const digitEase = "cubic-bezier(0.76, 0, 0.24, 1)";
+const counterEase = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
 const defaultFont: CSSProperties = {
   fontFamily: "Inter, system-ui, sans-serif",
@@ -99,48 +98,69 @@ const resolveColors = ({
   };
 };
 
-const DigitColumn = ({
-  values,
+const formatCounter = (value: number) => value.toString().padStart(2, "0");
+
+const AnimatedCounterDigit = ({
+  digit,
   index,
-  transitionDuration,
+  stepKey,
 }: {
-  values: number[];
+  digit: string;
   index: number;
-  transitionDuration: number;
+  stepKey: number;
 }) => (
   <span
     aria-hidden="true"
     style={{
+      position: "relative",
       display: "inline-block",
       width: "0.58em",
       height: "1em",
       overflow: "hidden",
-      verticalAlign: "top",
     }}
   >
-    <span
-      style={{
-        display: "block",
-        transform: `translate3d(0, -${index}em, 0)`,
-        transition: `transform ${transitionDuration}s ${digitEase}`,
-        willChange: "transform",
-      }}
-    >
-      {values.map((digit, digitIndex) => (
-        <span
-          key={`${digit}-${digitIndex}`}
-          style={{
-            display: "block",
-            height: "1em",
-            lineHeight: "1em",
-            textAlign: "center",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {digit}
-        </span>
-      ))}
-    </span>
+    <AnimatePresence mode="popLayout" initial={false}>
+      <motion.span
+        key={`${stepKey}-${index}-${digit}`}
+        initial={{
+          y: "88%",
+          opacity: 0,
+          scale: 0.985,
+          clipPath: "inset(100% 0% 0% 0%)",
+          filter: "blur(10px)",
+        }}
+        animate={{
+          y: "0%",
+          opacity: 1,
+          scale: 1,
+          clipPath: "inset(0% 0% 0% 0%)",
+          filter: "blur(0px)",
+        }}
+        exit={{
+          y: "-88%",
+          opacity: 0,
+          scale: 0.985,
+          clipPath: "inset(0% 0% 100% 0%)",
+          filter: "blur(10px)",
+        }}
+        transition={{
+          duration: 0.72,
+          delay: index * 0.08,
+          ease: counterEase,
+        }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          lineHeight: "1em",
+          willChange: "transform, opacity, clip-path, filter",
+        }}
+      >
+        {digit}
+      </motion.span>
+    </AnimatePresence>
   </span>
 );
 
@@ -151,13 +171,13 @@ const PremiumPreloader = ({
   progressColor = "#ff3347",
   trackColor = "transparent",
   font = defaultFont,
-  duration = 2.8,
+  duration = 3.4,
   speed = 1,
   showCounter = true,
   showProgress = true,
   barHeight = 4,
   exitDelay = 340,
-  exitDuration = 0.75,
+  exitDuration = 1.1,
   blurOnExit = true,
   zIndex = 9999,
 }: PremiumPreloaderProps) => {
@@ -174,7 +194,6 @@ const PremiumPreloader = ({
   const safeExitDelay = clamp(exitDelay, 0, 800);
   const safeExitDuration = clamp(exitDuration, 0.2, 1.5);
   const effectiveDurationMs = (safeDuration / safeSpeed) * 1000;
-  const digitTransitionDuration = clamp((effectiveDurationMs / 1000 / 99) * 2.6, 0.05, 0.18);
   const progressHeight = clamp(barHeight, 2, 6);
   const colors = resolveColors({
     theme,
@@ -247,10 +266,11 @@ const PremiumPreloader = ({
       const elapsed = time - startTime;
       const rawProgress = clamp(elapsed / effectiveDurationMs, 0, 1);
       const easedProgress = easeInOutCubic(rawProgress);
-      const nextValue = Math.min(99, Math.floor(easedProgress * 100));
+      const stepIndex = Math.min(Math.floor(rawProgress * counterSteps.length), counterSteps.length - 1);
+      const nextValue = counterSteps[stepIndex];
 
       setCounterValue(nextValue);
-      setProgressValue(nextValue >= 99 ? 1 : easedProgress);
+      setProgressValue(rawProgress >= 1 ? 1 : easedProgress);
 
       if (rawProgress < 1) {
         animationFrame = window.requestAnimationFrame(tick);
@@ -276,8 +296,9 @@ const PremiumPreloader = ({
     return null;
   }
 
-  const tensIndex = Math.floor(counterValue / 10);
   const counterX = progressValue * travelDistance;
+  const displayValue = formatCounter(counterValue);
+  const displayDigits = displayValue.split("");
 
   return (
     <motion.div
@@ -287,15 +308,7 @@ const PremiumPreloader = ({
       aria-hidden={isExiting}
       tabIndex={-1}
       initial={false}
-      animate={
-        isExiting
-          ? {
-              opacity: 0,
-              y: "-3vh",
-              filter: blurOnExit ? "blur(8px)" : "blur(0px)",
-            }
-          : { opacity: 1, y: "0vh", filter: "blur(0px)" }
-      }
+      animate={isExiting ? { y: "-100%" } : { y: "0%" }}
       transition={{
         duration: safeExitDuration,
         ease: exitEase,
@@ -315,73 +328,125 @@ const PremiumPreloader = ({
         backgroundColor: colors.backgroundColor,
         pointerEvents: "auto",
         overflow: "hidden",
-        willChange: "opacity, transform, filter",
+        willChange: "transform",
       }}
     >
       <span style={visuallyHiddenStyle}>Loading page</span>
 
-      {showProgress && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: progressHeight,
-            overflow: "hidden",
-            backgroundColor: colors.trackColor,
-          }}
-        >
+      <motion.div
+        aria-hidden={isExiting}
+        initial={false}
+        animate={
+          isExiting
+            ? {
+                opacity: 0,
+                y: "-4vh",
+                filter: blurOnExit ? "blur(10px)" : "blur(0px)",
+              }
+            : { opacity: 1, y: "0vh", filter: "blur(0px)" }
+        }
+        transition={{
+          duration: 0.48,
+          ease: counterEase,
+        }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          willChange: "opacity, transform, filter",
+        }}
+      >
+        {showProgress && (
           <div
+            aria-hidden="true"
             style={{
-              width: "100%",
-              height: "100%",
-              backgroundColor: colors.progressColor,
-              borderRadius: "0 999px 999px 0",
-              transform: `scaleX(${progressValue})`,
-              transformOrigin: "left center",
-              willChange: "transform",
-            }}
-          />
-        </div>
-      )}
-
-      {showCounter && (
-        <div
-          ref={stageRef}
-          style={{
-            position: "absolute",
-            left: "clamp(18px, 2vw, 42px)",
-            right: "clamp(18px, 2vw, 42px)",
-            bottom: "clamp(32px, 6vh, 82px)",
-            height: "clamp(92px, 14vw, 230px)",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            ref={counterRef}
-            style={{
-              ...defaultFont,
-              ...font,
-              color: colors.counterColor,
               position: "absolute",
+              top: 0,
               left: 0,
-              bottom: "-0.03em",
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "center",
-              fontVariantNumeric: "tabular-nums",
-              userSelect: "none",
-              transform: `translate3d(${counterX}px, 0, 0)`,
-              willChange: "transform",
+              width: "100%",
+              height: progressHeight,
+              overflow: "hidden",
+              backgroundColor: colors.trackColor,
             }}
           >
-            <DigitColumn values={digits} index={tensIndex} transitionDuration={digitTransitionDuration} />
-            <DigitColumn values={onesDigits} index={counterValue} transitionDuration={digitTransitionDuration} />
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                backgroundColor: colors.progressColor,
+                borderRadius: "0 999px 999px 0",
+                transform: `scaleX(${progressValue})`,
+                transformOrigin: "left center",
+                willChange: "transform",
+              }}
+            />
           </div>
-        </div>
-      )}
+        )}
+
+        {showCounter && (
+          <div
+            ref={stageRef}
+            style={{
+              position: "absolute",
+              left: "clamp(18px, 2vw, 42px)",
+              right: "clamp(18px, 2vw, 42px)",
+              bottom: "clamp(32px, 6vh, 82px)",
+              height: "clamp(92px, 14vw, 230px)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              ref={counterRef}
+              style={{
+                ...defaultFont,
+                ...font,
+                color: colors.counterColor,
+                position: "absolute",
+                left: 0,
+                bottom: "-0.03em",
+                width: "1.18em",
+                height: "1em",
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "center",
+                overflow: "hidden",
+                fontVariantNumeric: "tabular-nums",
+                userSelect: "none",
+                transform: `translate3d(${counterX}px, 0, 0)`,
+                willChange: "transform",
+              }}
+            >
+              {displayDigits.map((digit, index) => (
+                <AnimatedCounterDigit
+                  key={index}
+                  digit={digit}
+                  index={index}
+                  stepKey={counterValue}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      <motion.div
+        aria-hidden="true"
+        initial={false}
+        animate={isExiting ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
+        transition={{
+          duration: isExiting ? 0.2 : 0,
+          ease: "linear",
+        }}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          width: "100%",
+          height: progressHeight,
+          backgroundColor: colors.progressColor,
+          transformOrigin: "left center",
+          willChange: "transform, opacity",
+        }}
+      />
     </motion.div>
   );
 };
