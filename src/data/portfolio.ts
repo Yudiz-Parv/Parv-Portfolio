@@ -11,7 +11,7 @@ import type {
 } from "@/types/portfolio";
 
 export const BRAND = {
-  name: "MAHESH",
+  name: "PARV",
   legalName: "Mahesh P Pai",
   role: "Full Stack Engineer",
   location: "Kerala, India [Lat: 9.7, Long: 76.5]",

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from "@/config/app";
+import PremiumPreloader from "@/components/PremiumPreloader";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -14,6 +15,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ReactLenis root options={LENIS_OPTIONS}>
       <TooltipProvider>
+        <PremiumPreloader />
         <Toaster />
         <Sonner />
         <BrowserRouter>

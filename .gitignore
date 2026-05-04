@@ -5,9 +5,9 @@
 .pnp.js
 /testing
 /coverage
+/dist   
 
 /production
-
 /.husky
 
 .DS_Store
