@@ -139,11 +139,11 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
     items: [
       { name: "VS Code", url: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg" },
       { name: "Figma", url: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" },
-      { name: "Cursor", url: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cursor/cursor-original.svg" },
-      { name: "OpenAI", url: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/openai/openai-original.svg" },
-      { name: "Claude", url: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/claude/claude-original.svg" },
-      { name: "Perplexity", url: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/perplexity/perplexity-original.svg" },
-      { name: "Stitch", url: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/stitch/stitch-original.svg" },
+      { name: "Cursor", url: "https://api.iconify.design/simple-icons:cursor.svg?color=%23ffffff" },
+      { name: "OpenAI", url: "https://api.iconify.design/simple-icons:openai.svg?color=%23ffffff" },
+      { name: "Claude", url: "https://api.iconify.design/simple-icons:claude.svg?color=%23ffffff" },
+      { name: "Perplexity", url: "https://api.iconify.design/simple-icons:perplexity.svg?color=%23ffffff" },
+      { name: "Stitch", url: "https://www.gstatic.com/labs-code/stitch/favicon-192x192.png" },
     ],
   },
   {
