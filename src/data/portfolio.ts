@@ -35,7 +35,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
 
 export const HERO_COPY = {
   availability: "Open to collaborate",
-  headline: "Interfaces\nthat feel right",
+  headline: "Building software that feels alive",
   summary:
     "I am a frontend developer obsessed with clean code, AI-assisted workflows, and shipping things that actually feel alive. My focus is on turning complex product ideas into motion-led interfaces that remain fast, readable, and production-safe.",
   cta: "Get in touch",
@@ -168,7 +168,7 @@ export const PHILOSOPHY_COPY = {
 
 export const STATS: StatItem[] = [
   {
-    value: 10,
+    value: 4,
     suffix: "+",
     label: "Projects Completed",
     description: "Completed multiple projects from concept to final implementation.",
@@ -186,11 +186,11 @@ export const STATS: StatItem[] = [
     description: "Engineering judgment refined through real-world constraints.",
   },
   {
-    value: 1,
-    suffix: "st",
-    label: "Systems First",
-    description: "Architecture precedes interface. Structure defines outcome.",
-  },
+    value: Number.POSITIVE_INFINITY,
+    suffix: "",
+    label: "AI Prompts",
+    description: "Used AI to generate code and ideas for projects.",
+  },  
 ];
 
 export const CONTACT_COPY = {

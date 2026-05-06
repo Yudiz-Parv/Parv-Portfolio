@@ -9,7 +9,7 @@ const WorkMarquee = () => (
             aria-hidden={blockIndex > 0 ? "true" : undefined}
           >
             <span className="marquee-selected-works__text">Selected Works</span>
-            <span className="marquee-selected-works__dash">—</span>
+            <span className="marquee-selected-works__dash"> - </span>
           </div>
         ))}
       </div>

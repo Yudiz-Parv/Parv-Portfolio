@@ -168,7 +168,7 @@ const HeroSection = () => (
         className="w-fit"
       >
         <MobileCTA />
-        <h1 className="font-sans font-bold text-[clamp(2.75rem,6.5vw+1.25rem,8rem)] leading-[0.85] tracking-tighter text-white uppercase text-left text-balance max-w-full">
+        <h1 className="font-sans font-bold text-[clamp(2.75rem,6.5vw+1.25rem,6.5rem)] leading-[0.85] tracking-tighter text-white uppercase text-left text-balance max-w-full">
           {HERO_COPY.headline.split("\n").map((line) => (
             <span key={line} className="block">
               {line}
@@ -183,7 +183,7 @@ const HeroSection = () => (
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-        className="col-span-1 md:col-span-5 lg:col-span-4"
+        className="col-span-1 md:col-span-5 lg:col-span-6"
       >
         <div className="w-12 h-[2px] bg-white mb-6 md:hidden" />
         <p className="font-sans text-xs md:text-sm font-medium text-white leading-relaxed tracking-wide uppercase text-left">
