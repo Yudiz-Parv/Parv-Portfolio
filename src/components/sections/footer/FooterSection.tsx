@@ -1,19 +1,36 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
-import { BRAND, FOOTER_COLUMNS } from "@/data/portfolio";
+import { BRAND, FOOTER_COLUMNS, SOCIAL_LINKS } from "@/data/portfolio";
 import type { FooterColumn as FooterColumnConfig } from "@/types/portfolio";
 
+const footerBlobs = [
+  {
+    className: "ball",
+  },
+  {
+    className: "ball ball2",
+  },
+  {
+    className: "ball ball3",
+  },
+];
+
+const linkedInHref = SOCIAL_LINKS.find(({ label }) => label === "LinkedIn")?.href ?? "#";
+const footerNameParts = BRAND.legalName.split(" ");
+const footerFirstName = footerNameParts[0] ?? BRAND.name;
+const footerLastName = footerNameParts.slice(1).join(" ");
+
 const FooterColumn = ({ column }: { column: FooterColumnConfig }) => (
-  <motion.div variants={itemVariants} className="flex flex-col gap-1">
-    <h3 className="font-sans text-xs font-bold uppercase tracking-widest mb-4 text-white/80">
-      {column.title}
+  <motion.div variants={itemVariants} className="footer-column flex flex-col gap-1">
+    <h3 className="footer-column-title font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/80">
+      <span>{column.title}</span>
     </h3>
-    <div className="flex flex-col gap-2">
+    <div className="footer-column-body flex flex-col gap-1.5 md:gap-2">
       {column.items.map((item) => (
         <p
           key={item}
-          className="font-sans text-xs md:text-sm font-medium uppercase tracking-wide leading-relaxed text-white/60"
+          className="footer-column-item font-sans text-xs md:text-sm font-medium uppercase tracking-wide leading-relaxed text-white/60"
         >
           {item}
         </p>
@@ -24,9 +41,10 @@ const FooterColumn = ({ column }: { column: FooterColumnConfig }) => (
           href={link.href}
           target={link.href.startsWith("mailto") ? "_self" : "_blank"}
           rel="noopener noreferrer"
-          className="font-sans text-xs md:text-sm font-medium uppercase tracking-wide hover:underline underline-offset-4 decoration-1 w-fit flex items-center gap-1"
+          className="footer-link font-sans text-xs md:text-sm font-semibold uppercase tracking-wide w-fit flex items-center gap-1 text-white transition-colors duration-300 hover:text-[#f08d62]"
         >
-          {link.label} ↗
+          <span>{link.label}</span>
+          <span className="footer-link-arrow" aria-hidden="true">↗</span>
         </a>
       ))}
     </div>
@@ -66,10 +84,17 @@ const FooterSection = () => {
   const textOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <footer ref={footerRef} className="bg-black text-white font-sans pt-12 md:pt-20 border-t border-white h-screen flex flex-col">
+    <footer
+      ref={footerRef}
+      className="footer-bg text-white font-sans pt-10 md:pt-20 border-t border-white/20 h-screen flex flex-col"
+    >
+      {footerBlobs.map((blob) => (
+        <div key={blob.className} className={blob.className} />
+      ))}
+      <div className="footer-glow" />
 
       <motion.div
-        className="px-6 md:px-12 lg:px-16 max-w-[1600px] mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-y-10 md:gap-x-12 shrink-0"
+        className="footer-top-grid relative z-10 px-4 sm:px-6 md:px-12 lg:px-16 max-w-[1600px] mx-auto w-full grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8 md:gap-x-12 shrink-0"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -78,26 +103,52 @@ const FooterSection = () => {
         {FOOTER_COLUMNS.slice(0, 2).map((column) => (
           <FooterColumn key={column.title} column={column} />
         ))}
-        <motion.div variants={itemVariants} className="flex flex-col h-full justify-between">
+        <motion.div variants={itemVariants} className="col-span-2 md:col-span-1 flex flex-col h-full justify-between">
           <FooterColumn column={FOOTER_COLUMNS[2]} />
-          <div className="mt-8 md:mt-0">
-            <p className="font-sans text-xs md:text-sm font-bold uppercase tracking-widest text-white">
-              {BRAND.year}
-            </p>
-          </div>
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        className="footer-center relative z-10 px-4 sm:px-6 md:px-12 lg:px-16 max-w-[1600px] mx-auto w-full flex-1 flex flex-col items-center justify-center text-center"
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+      >
+        <motion.p
+          variants={itemVariants}
+          className="font-sans text-[0.66rem] md:text-xs font-bold uppercase tracking-[0.28em] text-[#f08d62]/80"
+        >
+          Open to collaborate
+        </motion.p>
+        <motion.h2
+          variants={itemVariants}
+          className="mt-3 font-sans text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black uppercase leading-[0.9] tracking-normal text-white"
+        >
+          Let's build
+          <br />
+          something sharp
+        </motion.h2>
+        <motion.div variants={itemVariants} className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <a href={`mailto:${BRAND.email}`} className="footer-cta-button footer-cta-button-primary">
+            Email me <span aria-hidden="true">↗</span>
+          </a>
+          <a href={linkedInHref} target="_blank" rel="noopener noreferrer" className="footer-cta-button">
+            LinkedIn <span aria-hidden="true">↗</span>
+          </a>
         </motion.div>
       </motion.div>
 
       <motion.div
         style={{ opacity: textOpacity, scale: textScale }}
-        className="w-full flex-1 flex flex-col justify-center items-center overflow-hidden select-none pb-4"
+        className="footer-text-shell"
+        aria-hidden="true"
       >
-        <h1 className="font-sans font-black text-[23vw] leading-[0.8] text-white uppercase tracking-tighter flex items-start">
-          {BRAND.name}
-          <span className="text-xl md:text-4xl lg:text-6xl font-medium mt-[2vw] ml-1 opacity-60">
-            ®
-          </span>
-        </h1>
+        <div className="footer-text footer-text-desktop">{BRAND.legalName}</div>
+        <div className="footer-text footer-text-mobile">
+          <span>{footerFirstName}</span>
+          {footerLastName ? <span>{footerLastName}</span> : null}
+        </div>
       </motion.div>
     </footer>
   );

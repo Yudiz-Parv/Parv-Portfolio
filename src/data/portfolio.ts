@@ -14,7 +14,7 @@ export const BRAND = {
   name: "PARV",
   legalName: "Parv Gosani",
   role: "Frontend Developer",
-  location: "Gujarat, India [Lat: 23.0, Long: 72.5]",
+  location: "Gujarat, India",
   email: "parvgosani107@gmail.com",
   year: "2026",
 };
