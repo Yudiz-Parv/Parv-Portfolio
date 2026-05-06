@@ -76,43 +76,43 @@ export const ABOUT_GROUPS: AboutGroup[] = [
 export const PROJECTS: Project[] = [
   {
     id: "001",
-    title: "Enterprise Resource Architecture",
-    stack: "React / Node.js / Firebase / Firestore",
+    title: "ProcLink",
+    stack: "React / Next.js / Tailwind CSS / GSAP / Framer Motion / GraphQL / Apollo Client",
     description:
-      "A full-stack ERP engine automating multi-currency invoicing, inventory logic, and international tax compliance for distributed teams.",
-    links: { live: "https://erpbeta.netlify.app", code: "#" },
+      "Proclink is a consulting and implementation firm supporting manufacturing and banking organizations in strengthening how their operations run and how decisions are made.",
+    links: { live: "https://proclink.com", code: "#" },
     image: "/p1.png",
     cta: "Live Project",
   },
   {
     id: "002",
-    title: "Geospatial Workforce Analytics",
-    stack: "React / Redux / Google Maps API / Firebase",
+    title: "Esports Tournament Management",
+    stack: "React / Next.js / Tailwind CSS / Framer Motion / TypeScript / React Query",
     description:
-      "Real-time tracking system implementing location-based validation protocols and live route visualization for workforce monitoring.",
-    links: { live: "#", code: "#" },
+      "A web-based platform for managing and organizing esports tournaments. It allows users to create, manage, and track tournaments, teams, and players. It also allows users to view and participate in tournaments.",
+    links: { live: "https://esportsverse.lc.webdevprojects.cloud", code: "#" },
     image: "/p2.png",
     cta: "Live Project",
   },
   {
     id: "003",
-    title: "OrderEase: Real-time online table food ordering system",
-    stack: "React / Firebase / Node.js",
+    title: "Spongein",
+    stack: "React / Next.js / Tailwind CSS / TypeScript / React Query",
     description:
-      "A real-time restaurant table ordering system that allows customers to place food orders directly from their table while enabling admins to manage menus, waiters, and assign waiters to customers for seamless service coordination.",
-    links: { live: "https://github.com/MAHESHPPAI/OrderEase", code: "#" },
+      "Spongein is an online streaming platform that offers students the entire CAPS curriculum in video format. Each lesson is presented by teachers as well as tutors for better understanding.",
+    links: { live: "https://spongein.com", code: "#" },
     image: "/p3.png",
-    cta: "View on Github",
+    cta: "Live Project",
   },
   {
     id: "004",
-    title: "BusBuddy: Transit Management Logic",
-    stack: "React / Firebase / Springboot / ngrok",
+    title: "Industrial Safety Solutions (ISS)",
+    stack: "Progressive Web App (PWA) / offline capabilities / React / Tailwind CSS / TypeScript / React Query",
     description:
-      "A real-time campus transportation platform that enables students to book seats and track buses live, drivers to stream GPS data during journeys, and transport officers to manage fleet availability, monitoring, and notifications seamlessly.",
-    links: { live: "https://github.com/MAHESHPPAI/Busbuddy-latest", code: "#" },
+      "Industrial Safety Solutions (ISS) is a web-based platform for managing and organizing industrial safety solutions. It allows users to create, manage, and track industrial safety solutions, teams, and players. It also allows users to view and participate in industrial safety solutions. It is a Progressive Web App (PWA) and can be installed on any device.",
+    links: { live: "https://iss-dev.lc.webdevprojects.cloud/home", code: "#" },
     image: "/p4.png",
-    cta: "View on Github",
+    cta: "Live Project",
   },
 ];
 
