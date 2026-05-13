@@ -144,7 +144,7 @@ const FooterSection = () => {
         className="footer-text-shell"
         aria-hidden="true"
       >
-        <div className="footer-text footer-text-desktop">{BRAND.legalName}</div>
+        <div className="footer-text footer-text-desktop" data-text={BRAND.legalName}>{BRAND.legalName}</div>
         <div className="footer-text footer-text-mobile">
           <span>{footerFirstName}</span>
           {footerLastName ? <span>{footerLastName}</span> : null}
