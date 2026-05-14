@@ -1,11 +1,9 @@
 import {
   useEffect,
-  useLayoutEffect,
-  useRef,
   useState,
   type CSSProperties,
 } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 type Theme = "dark" | "light" | "custom";
 
@@ -34,30 +32,29 @@ type ResolvedColors = {
   trackColor: string;
 };
 
-const counterSteps = [0, 18, 42, 67, 86, 99];
 const exitEase = [0.76, 0, 0.24, 1] as [number, number, number, number];
 const counterEase = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
 const defaultFont: CSSProperties = {
   fontFamily: "Inter, system-ui, sans-serif",
-  fontSize: "clamp(96px, 13vw, 220px)",
-  fontWeight: 500,
+  fontSize: "clamp(76px, 12vw, 196px)",
+  fontWeight: 900,
   letterSpacing: 0,
-  lineHeight: 0.86,
+  lineHeight: 0.78,
 };
 
 const themeColors: Record<Exclude<Theme, "custom">, ResolvedColors> = {
   dark: {
-    backgroundColor: "#000000",
-    counterColor: "#FFFFFF",
-    progressColor: "#ff3347",
-    trackColor: "transparent",
+    backgroundColor: "#FFFFFF",
+    counterColor: "#050505",
+    progressColor: "#f08d62",
+    trackColor: "#050505",
   },
   light: {
-    backgroundColor: "#F4F1EA",
+    backgroundColor: "#FFFFFF",
     counterColor: "#050505",
-    progressColor: "#ff3347",
-    trackColor: "transparent",
+    progressColor: "#f08d62",
+    trackColor: "#050505",
   },
 };
 
@@ -98,78 +95,14 @@ const resolveColors = ({
   };
 };
 
-const formatCounter = (value: number) => value.toString().padStart(2, "0");
-
-const AnimatedCounterDigit = ({
-  digit,
-  index,
-  stepKey,
-}: {
-  digit: string;
-  index: number;
-  stepKey: number;
-}) => (
-  <span
-    aria-hidden="true"
-    style={{
-      position: "relative",
-      display: "inline-block",
-      width: "0.58em",
-      height: "1em",
-      overflow: "hidden",
-    }}
-  >
-    <AnimatePresence mode="popLayout" initial={false}>
-      <motion.span
-        key={`${stepKey}-${index}-${digit}`}
-        initial={{
-          y: "88%",
-          opacity: 0,
-          scale: 0.985,
-          clipPath: "inset(100% 0% 0% 0%)",
-          filter: "blur(10px)",
-        }}
-        animate={{
-          y: "0%",
-          opacity: 1,
-          scale: 1,
-          clipPath: "inset(0% 0% 0% 0%)",
-          filter: "blur(0px)",
-        }}
-        exit={{
-          y: "-88%",
-          opacity: 0,
-          scale: 0.985,
-          clipPath: "inset(0% 0% 100% 0%)",
-          filter: "blur(10px)",
-        }}
-        transition={{
-          duration: 0.72,
-          delay: index * 0.08,
-          ease: counterEase,
-        }}
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "center",
-          lineHeight: "1em",
-          willChange: "transform, opacity, clip-path, filter",
-        }}
-      >
-        {digit}
-      </motion.span>
-    </AnimatePresence>
-  </span>
-);
+const formatCounter = (value: number) => value.toString().padStart(3, "0");
 
 const PremiumPreloader = ({
   theme = "dark",
-  backgroundColor = "#000000",
-  counterColor = "#FFFFFF",
-  progressColor = "#ff3347",
-  trackColor = "transparent",
+  backgroundColor = "#FFFFFF",
+  counterColor = "#050505",
+  progressColor = "#f08d62",
+  trackColor = "#050505",
   font = defaultFont,
   duration = 3.4,
   speed = 1,
@@ -181,11 +114,9 @@ const PremiumPreloader = ({
   blurOnExit = true,
   zIndex = 9999,
 }: PremiumPreloaderProps) => {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const counterRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
   const [counterValue, setCounterValue] = useState(0);
   const [progressValue, setProgressValue] = useState(0);
-  const [travelDistance, setTravelDistance] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const [shouldRender, setShouldRender] = useState(true);
 
@@ -193,7 +124,8 @@ const PremiumPreloader = ({
   const safeSpeed = clamp(speed, 0.5, 2);
   const safeExitDelay = clamp(exitDelay, 0, 800);
   const safeExitDuration = clamp(exitDuration, 0.2, 1.5);
-  const effectiveDurationMs = (safeDuration / safeSpeed) * 1000;
+  const effectiveDurationMs = (shouldReduceMotion ? 0.9 : safeDuration / safeSpeed) * 1000;
+  const exitDurationSeconds = shouldReduceMotion ? 0.36 : safeExitDuration;
   const progressHeight = clamp(barHeight, 2, 6);
   const colors = resolveColors({
     theme,
@@ -202,36 +134,6 @@ const PremiumPreloader = ({
     progressColor,
     trackColor,
   });
-
-  useLayoutEffect(() => {
-    if (!showCounter) {
-      setTravelDistance(0);
-      return;
-    }
-
-    const stage = stageRef.current;
-    const counter = counterRef.current;
-
-    if (!stage || !counter) {
-      return;
-    }
-
-    const measure = () => {
-      setTravelDistance(Math.max(stage.clientWidth - counter.offsetWidth, 0));
-    };
-
-    measure();
-
-    const resizeObserver = new ResizeObserver(measure);
-    resizeObserver.observe(stage);
-    resizeObserver.observe(counter);
-    window.addEventListener("resize", measure);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [showCounter, font]);
 
   useEffect(() => {
     if (!shouldRender) {
@@ -266,10 +168,8 @@ const PremiumPreloader = ({
       const elapsed = time - startTime;
       const rawProgress = clamp(elapsed / effectiveDurationMs, 0, 1);
       const easedProgress = easeInOutCubic(rawProgress);
-      const stepIndex = Math.min(Math.floor(rawProgress * counterSteps.length), counterSteps.length - 1);
-      const nextValue = counterSteps[stepIndex];
 
-      setCounterValue(nextValue);
+      setCounterValue(Math.round(easedProgress * 100));
       setProgressValue(rawProgress >= 1 ? 1 : easedProgress);
 
       if (rawProgress < 1) {
@@ -277,7 +177,7 @@ const PremiumPreloader = ({
         return;
       }
 
-      setCounterValue(99);
+      setCounterValue(100);
       setProgressValue(1);
       exitTimer = window.setTimeout(() => {
         setIsExiting(true);
@@ -296,9 +196,27 @@ const PremiumPreloader = ({
     return null;
   }
 
-  const counterX = progressValue * travelDistance;
   const displayValue = formatCounter(counterValue);
-  const displayDigits = displayValue.split("");
+
+  // Compute SVG path endpoints directly from progress — avoids strokeDasharray pitfalls
+  const tipX = progressValue * 100;
+  const tipY = progressValue * 100;
+  const progressPath = progressValue > 0.001 ? `M0,0 L${tipX},${tipY}` : null;
+
+  const HEAD = 0.09;
+  const headStartX = Math.max(0, progressValue - HEAD) * 100;
+  const headPath =
+    progressValue > HEAD
+      ? `M${headStartX},${headStartX} L${tipX},${tipY}`
+      : progressPath;
+
+  const TIP = 0.022;
+  const tipStartX = Math.max(0, progressValue - TIP) * 100;
+  const tipPath =
+    progressValue > TIP
+      ? `M${tipStartX},${tipStartX} L${tipX},${tipY}`
+      : progressPath;
+  const tipDotPath = progressValue > 0.025 ? `M${tipX},${tipY} l0.01,0.01` : null;
 
   return (
     <motion.div
@@ -308,15 +226,10 @@ const PremiumPreloader = ({
       aria-hidden={isExiting}
       tabIndex={-1}
       initial={false}
-      animate={isExiting ? { y: "-100%" } : { y: "0%" }}
+      animate={shouldReduceMotion && isExiting ? { opacity: 0 } : { opacity: 1 }}
       transition={{
-        duration: safeExitDuration,
+        duration: exitDurationSeconds,
         ease: exitEase,
-      }}
-      onAnimationComplete={() => {
-        if (isExiting) {
-          setShouldRender(false);
-        }
       }}
       style={{
         position: "fixed",
@@ -325,13 +238,63 @@ const PremiumPreloader = ({
         width: "100vw",
         height: "100vh",
         boxSizing: "border-box",
-        backgroundColor: colors.backgroundColor,
+        backgroundColor: "transparent",
         pointerEvents: "auto",
         overflow: "hidden",
+        isolation: "isolate",
         willChange: "transform",
       }}
     >
       <span style={visuallyHiddenStyle}>Loading page</span>
+
+      <motion.div
+        aria-hidden="true"
+        initial={false}
+        animate={
+          isExiting
+            ? { x: "100%", y: "-100%" }
+            : { x: "0%", y: "0%" }
+        }
+        transition={{
+          duration: exitDurationSeconds,
+          ease: shouldReduceMotion ? "easeOut" : exitEase,
+        }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+          backgroundColor: colors.backgroundColor,
+          clipPath: "polygon(0 0, 100% 0, 100% 100%)",
+          willChange: "transform",
+        }}
+      />
+
+      <motion.div
+        aria-hidden="true"
+        initial={false}
+        animate={
+          isExiting
+            ? { x: "-100%", y: "100%" }
+            : { x: "0%", y: "0%" }
+        }
+        transition={{
+          duration: exitDurationSeconds,
+          ease: shouldReduceMotion ? "easeOut" : exitEase,
+        }}
+        onAnimationComplete={() => {
+          if (isExiting) {
+            setShouldRender(false);
+          }
+        }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+          backgroundColor: colors.backgroundColor,
+          clipPath: "polygon(0 0, 0 100%, 100% 100%)",
+          willChange: "transform",
+        }}
+      />
 
       <motion.div
         aria-hidden={isExiting}
@@ -340,8 +303,8 @@ const PremiumPreloader = ({
           isExiting
             ? {
                 opacity: 0,
-                y: "-4vh",
-                filter: blurOnExit ? "blur(10px)" : "blur(0px)",
+                y: shouldReduceMotion ? "0vh" : "-2vh",
+                filter: !shouldReduceMotion && blurOnExit ? "blur(10px)" : "blur(0px)",
               }
             : { opacity: 1, y: "0vh", filter: "blur(0px)" }
         }
@@ -352,101 +315,213 @@ const PremiumPreloader = ({
         style={{
           position: "absolute",
           inset: 0,
+          zIndex: 2,
           willChange: "opacity, transform, filter",
         }}
       >
         {showProgress && (
-          <div
+          <svg
             aria-hidden="true"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
             style={{
               position: "absolute",
-              top: 0,
-              left: 0,
+              inset: 0,
               width: "100%",
-              height: progressHeight,
-              overflow: "hidden",
-              backgroundColor: colors.trackColor,
+              height: "100%",
+              pointerEvents: "none",
             }}
           >
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                backgroundColor: colors.progressColor,
-                borderRadius: "0 999px 999px 0",
-                transform: `scaleX(${progressValue})`,
-                transformOrigin: "left center",
-                willChange: "transform",
-              }}
+            <defs>
+              <linearGradient id="pldr-core-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffb06c" />
+                <stop offset="45%" stopColor="#ff7030" />
+                <stop offset="100%" stopColor="#c84010" />
+              </linearGradient>
+              <linearGradient id="pldr-tip-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fff8ef" />
+                <stop offset="45%" stopColor="#ffc48d" />
+                <stop offset="100%" stopColor="#ff6f2f" />
+              </linearGradient>
+            </defs>
+
+            {/* Static black base track — always full diagonal */}
+            <line
+              x1="0" y1="0" x2="100" y2="100"
+              stroke={colors.trackColor}
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
             />
-          </div>
+
+            {/* Progress fill — grows from top-left corner as load advances */}
+            {progressPath && (
+              <motion.g
+                animate={{ opacity: isExiting ? 0 : 1 }}
+                transition={{
+                  duration: isExiting ? exitDurationSeconds * 0.5 : 0,
+                  ease: "easeOut",
+                }}
+              >
+                {/* Outer ambient glow */}
+                <path
+                  d={progressPath}
+                  stroke="#ff7030"
+                  strokeWidth={progressHeight + 22}
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                  fill="none"
+                  style={{ opacity: 0.055 }}
+                />
+                {/* Mid glow */}
+                <path
+                  d={progressPath}
+                  stroke="#ff7030"
+                  strokeWidth={progressHeight + 11}
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                  fill="none"
+                  style={{ opacity: 0.14 }}
+                />
+                {/* Tight inner glow */}
+                <path
+                  d={progressPath}
+                  stroke="#ff7030"
+                  strokeWidth={progressHeight + 4}
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                  fill="none"
+                  style={{ opacity: 0.28 }}
+                />
+                {/* Sharp colored core */}
+                <path
+                  d={progressPath}
+                  stroke="url(#pldr-core-grad)"
+                  strokeWidth={progressHeight}
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                  fill="none"
+                  style={{ opacity: 1 }}
+                />
+
+                {/* Bright head riding the leading tip */}
+                {progressValue > 0.025 && !shouldReduceMotion && headPath && (
+                  <>
+                    {/* Head outer halo */}
+                    <path
+                      d={headPath}
+                      stroke="#ff9050"
+                      strokeWidth={progressHeight + 24}
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                      fill="none"
+                      style={{
+                        opacity: 0.18,
+                        filter: "drop-shadow(0 0 18px rgba(255, 112, 48, 0.55))",
+                      }}
+                    />
+                    {/* Polished warm head */}
+                    <path
+                      d={headPath}
+                      stroke="url(#pldr-tip-grad)"
+                      strokeWidth={progressHeight + 9}
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                      fill="none"
+                      style={{
+                        opacity: 0.72,
+                        filter: "drop-shadow(0 0 8px rgba(255, 196, 141, 0.5))",
+                      }}
+                    />
+                    {/* White-hot tip */}
+                    {tipPath && (
+                      <path
+                        d={tipPath}
+                        stroke="#fff6ee"
+                        strokeWidth={progressHeight + 3}
+                        strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke"
+                        fill="none"
+                        style={{
+                          opacity: 0.96,
+                          filter: "drop-shadow(0 0 7px rgba(255, 255, 255, 0.9))",
+                        }}
+                      />
+                    )}
+                    {tipDotPath && (
+                      <>
+                        <path
+                          d={tipDotPath}
+                          stroke="#ff7a32"
+                          strokeWidth={progressHeight + 15}
+                          strokeLinecap="round"
+                          vectorEffect="non-scaling-stroke"
+                          fill="none"
+                          style={{ opacity: 0.2 }}
+                        />
+                        <path
+                          d={tipDotPath}
+                          stroke="#fffaf4"
+                          strokeWidth={progressHeight + 5}
+                          strokeLinecap="round"
+                          vectorEffect="non-scaling-stroke"
+                          fill="none"
+                          style={{
+                            opacity: 0.98,
+                            filter: "drop-shadow(0 0 10px rgba(255, 122, 50, 0.72))",
+                          }}
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+              </motion.g>
+            )}
+          </svg>
         )}
 
         {showCounter && (
           <div
-            ref={stageRef}
             style={{
               position: "absolute",
-              left: "clamp(18px, 2vw, 42px)",
-              right: "clamp(18px, 2vw, 42px)",
-              bottom: "clamp(32px, 6vh, 82px)",
-              height: "clamp(92px, 14vw, 230px)",
+              left: "clamp(18px, 4vw, 64px)",
+              bottom: "clamp(24px, 5.5vh, 68px)",
+              width: "min(78vw, 520px)",
               overflow: "hidden",
             }}
           >
             <div
-              ref={counterRef}
               style={{
                 ...defaultFont,
                 ...font,
                 color: colors.counterColor,
-                position: "absolute",
-                left: 0,
-                bottom: "-0.03em",
-                width: "1.18em",
-                height: "1em",
-                display: "flex",
-                alignItems: "flex-end",
-                justifyContent: "center",
-                overflow: "hidden",
+                position: "relative",
+                display: "block",
                 fontVariantNumeric: "tabular-nums",
                 userSelect: "none",
-                transform: `translate3d(${counterX}px, 0, 0)`,
-                willChange: "transform",
+                textShadow: shouldReduceMotion
+                  ? "none"
+                  : "0 0 26px rgba(240, 141, 98, 0.16), 0 14px 44px rgba(211, 64, 0, 0.12)",
+                willChange: "opacity, transform, filter",
               }}
             >
-              {displayDigits.map((digit, index) => (
-                <AnimatedCounterDigit
-                  key={index}
-                  digit={digit}
-                  index={index}
-                  stepKey={counterValue}
-                />
-              ))}
+              {displayValue}
             </div>
+            <div
+              aria-hidden="true"
+              style={{
+                marginTop: "clamp(8px, 1.2vh, 14px)",
+                width: "clamp(46px, 9vw, 116px)",
+                height: 2,
+                background:
+                  "linear-gradient(90deg, #f08d62 0%, rgba(255, 122, 60, 0.42) 58%, rgba(240, 141, 98, 0) 100%)",
+                boxShadow: shouldReduceMotion
+                  ? "none"
+                  : "0 0 18px rgba(240, 141, 98, 0.38)",
+              }}
+            />
           </div>
         )}
       </motion.div>
-
-      <motion.div
-        aria-hidden="true"
-        initial={false}
-        animate={isExiting ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
-        transition={{
-          duration: isExiting ? 0.2 : 0,
-          ease: "linear",
-        }}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          width: "100%",
-          height: progressHeight,
-          backgroundColor: colors.progressColor,
-          transformOrigin: "left center",
-          willChange: "transform, opacity",
-        }}
-      />
     </motion.div>
   );
 };
