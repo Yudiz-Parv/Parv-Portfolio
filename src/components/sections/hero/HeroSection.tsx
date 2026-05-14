@@ -131,16 +131,13 @@ const MobileSocialStrip = ({ links }: { links: SocialLink[] }) => (
 );
 
 const MobileCTA = () => (
-  <a
-    href="#contact"
-    className="group relative overflow-hidden border border-white/30 px-5 py-3 flex items-center gap-3 hover:border-white transition-colors duration-500 w-fit mb-6 md:hidden"
-  >
+  <>
     <span className="absolute inset-0 bg-white translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-500 ease-in-out" />
     <span className="relative font-sans font-black text-[10px] tracking-[0.25em] uppercase text-white group-hover:text-black transition-colors duration-300 z-10">
       {HERO_COPY.cta}
     </span>
     <ArrowRight className="relative w-3 h-3 text-white group-hover:text-black transition-colors duration-300 z-10" strokeWidth={2.5} />
-  </a>
+  </>
 );
 
 const HeroSection = () => (
