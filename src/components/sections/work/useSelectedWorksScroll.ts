@@ -12,6 +12,29 @@ const STACK_CONFIG = {
   baseScale: 0.92,
 };
 
+const MARQUEE_CONFIG = {
+  foregroundBaseSpeed: 56,
+  backgroundBaseSpeed: 32,
+  reducedForegroundSpeed: 5,
+  reducedBackgroundSpeed: 3,
+  scrollBoostMultiplier: 20,
+  maxScrollBoost: 900,
+};
+
+interface MarqueeMotionState {
+  backgroundLoopWidth: number;
+  backgroundX: number;
+  direction: 1 | -1;
+  foregroundLoopWidth: number;
+  foregroundX: number;
+  hasScrollSample: boolean;
+  lastTime: number;
+  rafId: number;
+  reducedMotion: boolean;
+  scrollBoost: number;
+  previousScroll: number;
+}
+
 export function useSelectedWorksScroll() {
   const cardsRef = useRef<HTMLElement[]>([]);
   const cardOffsetsRef = useRef<number[]>([]);
@@ -19,6 +42,8 @@ export function useSelectedWorksScroll() {
   const stackInnerRef = useRef<HTMLDivElement>(null);
   const stackInnerTopRef = useRef<number>(0);
   const voidContainerRef = useRef<HTMLDivElement>(null);
+  const marqueeForegroundTrackRef = useRef<HTMLDivElement>(null);
+  const marqueeBackgroundTrackRef = useRef<HTMLDivElement>(null);
   const kineticWheelRef = useRef<HTMLDivElement>(null);
   const threadPathRef = useRef<SVGPathElement>(null);
   const figureGroupRef = useRef<SVGGElement>(null);
@@ -27,11 +52,55 @@ export function useSelectedWorksScroll() {
   const textDesignRef = useRef<SVGTextElement>(null);
   const textBuildRef = useRef<SVGTextElement>(null);
   const textDeliverRef = useRef<SVGTextElement>(null);
+  const marqueeMotionRef = useRef<MarqueeMotionState>({
+    backgroundLoopWidth: 1,
+    backgroundX: 0,
+    direction: 1,
+    foregroundLoopWidth: 1,
+    foregroundX: 0,
+    hasScrollSample: false,
+    lastTime: 0,
+    rafId: 0,
+    reducedMotion: false,
+    scrollBoost: 0,
+    previousScroll: 0,
+  });
 
   const [ready, setReady] = useState(false);
   const isMobile = useMaxWidth(1024);
 
+  const updateMarqueeScrollState = useCallback((scroll: number) => {
+    const state = marqueeMotionRef.current;
+
+    if (!state.hasScrollSample) {
+      state.previousScroll = scroll;
+      state.hasScrollSample = true;
+      return;
+    }
+
+    const scrollDelta = scroll - state.previousScroll;
+    state.previousScroll = scroll;
+
+    if (Math.abs(scrollDelta) < 0.1) return;
+
+    state.direction = scrollDelta > 0 ? 1 : -1;
+
+    if (state.reducedMotion) {
+      state.scrollBoost = 0;
+      return;
+    }
+
+    const nextBoost = Math.min(
+      Math.abs(scrollDelta) * MARQUEE_CONFIG.scrollBoostMultiplier,
+      MARQUEE_CONFIG.maxScrollBoost,
+    );
+
+    state.scrollBoost += (nextBoost - state.scrollBoost) * 0.45;
+  }, []);
+
   useLenis(({ scroll }) => {
+    updateMarqueeScrollState(scroll);
+
     if (!ready) return;
 
     const cards = cardsRef.current;
@@ -138,6 +207,23 @@ export function useSelectedWorksScroll() {
     setReady(true);
   }, [isMobile]);
 
+  const measureMarquee = useCallback(() => {
+    const state = marqueeMotionRef.current;
+    state.foregroundLoopWidth = getMarqueeLoopWidth(marqueeForegroundTrackRef.current);
+    state.backgroundLoopWidth = getMarqueeLoopWidth(marqueeBackgroundTrackRef.current);
+
+    applyMarqueeTransform(
+      marqueeForegroundTrackRef.current,
+      state.foregroundX,
+      state.foregroundLoopWidth,
+    );
+    applyMarqueeTransform(
+      marqueeBackgroundTrackRef.current,
+      state.backgroundX,
+      state.backgroundLoopWidth,
+    );
+  }, []);
+
   const calculateAndRender = useCallback(() => {
     cachePositions();
   }, [cachePositions]);
@@ -165,10 +251,84 @@ export function useSelectedWorksScroll() {
     };
   }, [calculateAndRender]);
 
+  useEffect(() => {
+    const state = marqueeMotionRef.current;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const syncReducedMotion = () => {
+      state.reducedMotion = mediaQuery.matches;
+      if (state.reducedMotion) state.scrollBoost = 0;
+    };
+
+    const animateMarquee = (time: number) => {
+      if (!state.lastTime) state.lastTime = time;
+
+      const deltaSeconds = Math.min((time - state.lastTime) / 1000, 0.05);
+      state.lastTime = time;
+
+      const foregroundSpeed = state.reducedMotion
+        ? MARQUEE_CONFIG.reducedForegroundSpeed
+        : MARQUEE_CONFIG.foregroundBaseSpeed + state.scrollBoost;
+      const backgroundSpeed = state.reducedMotion
+        ? MARQUEE_CONFIG.reducedBackgroundSpeed
+        : MARQUEE_CONFIG.backgroundBaseSpeed + state.scrollBoost * 0.45;
+
+      state.foregroundX = wrapMarqueeValue(
+        state.foregroundX - state.direction * foregroundSpeed * deltaSeconds,
+        state.foregroundLoopWidth,
+      );
+      state.backgroundX = wrapMarqueeValue(
+        state.backgroundX + state.direction * backgroundSpeed * deltaSeconds,
+        state.backgroundLoopWidth,
+      );
+      state.scrollBoost *= Math.exp(-deltaSeconds * 3.4);
+
+      if (state.scrollBoost < 0.1) state.scrollBoost = 0;
+
+      applyMarqueeTransform(
+        marqueeForegroundTrackRef.current,
+        state.foregroundX,
+        state.foregroundLoopWidth,
+      );
+      applyMarqueeTransform(
+        marqueeBackgroundTrackRef.current,
+        state.backgroundX,
+        state.backgroundLoopWidth,
+      );
+
+      state.rafId = requestAnimationFrame(animateMarquee);
+    };
+
+    syncReducedMotion();
+    measureMarquee();
+
+    const foregroundTrack = marqueeForegroundTrackRef.current;
+    const backgroundTrack = marqueeBackgroundTrackRef.current;
+    const resizeObserver =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measureMarquee);
+
+    if (foregroundTrack) resizeObserver?.observe(foregroundTrack);
+    if (backgroundTrack) resizeObserver?.observe(backgroundTrack);
+
+    window.addEventListener("resize", measureMarquee, { passive: true });
+    mediaQuery.addEventListener("change", syncReducedMotion);
+    state.rafId = requestAnimationFrame(animateMarquee);
+
+    return () => {
+      cancelAnimationFrame(state.rafId);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", measureMarquee);
+      mediaQuery.removeEventListener("change", syncReducedMotion);
+      state.lastTime = 0;
+    };
+  }, [measureMarquee]);
+
   return {
     isMobile,
     stackInnerRef,
     voidContainerRef,
+    marqueeForegroundTrackRef,
+    marqueeBackgroundTrackRef,
     kineticWheelRef,
     threadPathRef,
     figureGroupRef,
@@ -386,4 +546,19 @@ function animateText(ref: RefObject<SVGTextElement>, drawProgress: number, targe
 
 function clamp(value: number) {
   return Math.min(Math.max(value, 0), 1);
+}
+
+function getMarqueeLoopWidth(track: HTMLDivElement | null) {
+  if (!track) return 1;
+  return Math.max(track.scrollWidth / 2, 1);
+}
+
+function wrapMarqueeValue(value: number, loopWidth: number) {
+  if (loopWidth <= 1) return 0;
+  return ((((value % loopWidth) + loopWidth) % loopWidth) - loopWidth);
+}
+
+function applyMarqueeTransform(track: HTMLDivElement | null, x: number, loopWidth: number) {
+  if (!track) return;
+  track.style.transform = `translate3d(${wrapMarqueeValue(x, loopWidth).toFixed(2)}px, 0, 0)`;
 }

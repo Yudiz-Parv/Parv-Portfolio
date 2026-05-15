@@ -11,6 +11,8 @@ const SelectedWorksSection = () => {
     figureGroupRef,
     isMobile,
     kineticWheelRef,
+    marqueeBackgroundTrackRef,
+    marqueeForegroundTrackRef,
     stackInnerRef,
     textAnalyzeRef,
     textBuildRef,
@@ -22,7 +24,10 @@ const SelectedWorksSection = () => {
 
   return (
     <section className="min-h-screen bg-black text-white font-sans relative">
-      <WorkMarquee />
+      <WorkMarquee
+        foregroundTrackRef={marqueeForegroundTrackRef}
+        backgroundTrackRef={marqueeBackgroundTrackRef}
+      />
 
       <div
         ref={stackInnerRef}
