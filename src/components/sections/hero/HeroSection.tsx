@@ -343,7 +343,7 @@ const HeroSection = () => {
       <AvailabilityBadge isIntroReady={isIntroReady} />
       <SocialStrip links={SOCIAL_LINKS} isIntroReady={isIntroReady} />
       <SpinningCTA isIntroReady={isIntroReady} />
-      <div className="hidden lg:block">
+      <div className="absolute inset-0 z-[1]">
         <SplashCursor />
       </div>
 
