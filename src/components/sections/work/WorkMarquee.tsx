@@ -11,6 +11,7 @@ const MARQUEE_COPY = {
   back: ["Vibe Coder", "AI Developer", "Frontend Developer", "Creative Developer"],
 };
 const MARQUEE_GROUPS = [0, 1];
+const SPARK_ARMS = [0, 1, 2, 3, 4, 5];
 
 const WorkMarquee = ({ foregroundTrackRef, backgroundTrackRef }: WorkMarqueeProps) => {
   const [isBackHovered, setIsBackHovered] = useState(false);
@@ -49,7 +50,13 @@ const MarqueeLayer = ({ refTarget, layer, onPointerEnter, onPointerLeave }: Marq
           {MARQUEE_COPY[layer].map((label) => (
             <span key={`${groupIndex}-${label}`} className="work-marquee__segment">
               <span className="work-marquee__label">{label}</span>
-              <span className="work-marquee__separator">-</span>
+              <span className="work-marquee__separator">
+                <span className="work-marquee__spark">
+                  {SPARK_ARMS.map((arm) => (
+                    <span key={arm} className="work-marquee__spark-arm" />
+                  ))}
+                </span>
+              </span>
             </span>
           ))}
         </div>

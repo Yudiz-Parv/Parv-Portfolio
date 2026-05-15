@@ -13,12 +13,12 @@ const STACK_CONFIG = {
 };
 
 const MARQUEE_CONFIG = {
-  foregroundBaseSpeed: 56,
-  backgroundBaseSpeed: 32,
-  reducedForegroundSpeed: 5,
-  reducedBackgroundSpeed: 3,
-  scrollBoostMultiplier: 20,
-  maxScrollBoost: 900,
+  foregroundBaseSpeed: 86,
+  backgroundBaseSpeed: 52,
+  reducedForegroundSpeed: 7,
+  reducedBackgroundSpeed: 4,
+  scrollBoostMultiplier: 24,
+  maxScrollBoost: 1100,
 };
 
 interface MarqueeMotionState {

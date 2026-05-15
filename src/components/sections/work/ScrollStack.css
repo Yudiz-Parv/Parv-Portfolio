@@ -1,4 +1,10 @@
 /* ========== MARQUEE - Scroll Reactive Kinetic Strips ========== */
+@keyframes work-marquee-spark-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .work-marquee-shell {
   position: relative;
   z-index: 10;
@@ -137,9 +143,67 @@
 
 .work-marquee__separator {
   margin-left: clamp(0.95rem, 2.1vw, 2.4rem);
-  font-size: clamp(1.9rem, 4.3vw, 5rem);
-  font-weight: 800;
-  line-height: 1;
+  inline-size: clamp(1.6rem, 3.4vw, 4rem);
+  block-size: clamp(1.6rem, 3.4vw, 4rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.work-marquee__spark {
+  position: relative;
+  display: block;
+  inline-size: 78%;
+  block-size: 78%;
+  color: currentColor;
+  animation: work-marquee-spark-spin 3.8s linear infinite;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.work-marquee__spark::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  inline-size: 14%;
+  block-size: 14%;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.work-marquee__spark-arm {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  inline-size: 14%;
+  block-size: 42%;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: 50% 0;
+  transform: translateX(-50%) rotate(0deg);
+}
+
+.work-marquee__spark-arm:nth-child(2) {
+  transform: translateX(-50%) rotate(60deg);
+}
+
+.work-marquee__spark-arm:nth-child(3) {
+  transform: translateX(-50%) rotate(120deg);
+}
+
+.work-marquee__spark-arm:nth-child(4) {
+  transform: translateX(-50%) rotate(180deg);
+}
+
+.work-marquee__spark-arm:nth-child(5) {
+  transform: translateX(-50%) rotate(240deg);
+}
+
+.work-marquee__spark-arm:nth-child(6) {
+  transform: translateX(-50%) rotate(300deg);
 }
 
 @media (max-width: 1023px) {
@@ -179,7 +243,14 @@
   }
 
   .work-marquee__separator {
-    font-size: clamp(1.45rem, 6.6vw, 3.2rem);
+    inline-size: clamp(1.25rem, 6vw, 2.7rem);
+    block-size: clamp(1.25rem, 6vw, 2.7rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-marquee__spark {
+    animation: none;
   }
 }
 

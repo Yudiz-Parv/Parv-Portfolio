@@ -157,6 +157,7 @@ const PremiumPreloader = ({
 
   const isCurtainOnly = mode === "curtain";
   const isMobileLayout = viewportSize.width < 640;
+  const isPhoneLayout = viewportSize.width < 480;
   const isShortMobileLayout = isMobileLayout && viewportSize.height < 720;
   const safeDuration = clamp(duration, 1, 6);
   const safeSpeed = clamp(speed, 0.5, 2);
@@ -187,11 +188,18 @@ const PremiumPreloader = ({
     ...font,
     ...(isMobileLayout
       ? {
-          fontSize: isShortMobileLayout ? "clamp(58px, 20vw, 82px)" : "clamp(64px, 21vw, 104px)",
-          lineHeight: 0.86,
+          fontSize: isShortMobileLayout
+            ? "clamp(52px, 18vw, 76px)"
+            : isPhoneLayout
+              ? "clamp(58px, 18.5vw, 88px)"
+              : "clamp(64px, 16vw, 96px)",
+          lineHeight: 0.94,
         }
       : {}),
   };
+  const mobileCounterBottom = isShortMobileLayout
+    ? "max(52px, calc(env(safe-area-inset-bottom) + 42px))"
+    : "max(76px, calc(env(safe-area-inset-bottom) + 62px))";
   const responsiveProgressHeight = isMobileLayout ? clamp(progressHeight, 2, 3) : progressHeight;
   const trackStrokeWidth = isMobileLayout ? 1.4 : 1;
   const progressStrokes = {
@@ -295,8 +303,8 @@ const PremiumPreloader = ({
   const displayValue = formatCounter(counterValue);
 
   // Compute SVG path endpoints directly from progress — avoids strokeDasharray pitfalls.
-  const diagonalStart = isMobileLayout ? { x: 0, y: 3 } : { x: 0, y: 0 };
-  const diagonalEnd = isMobileLayout ? { x: 100, y: 97 } : { x: 100, y: 100 };
+  const diagonalStart = isMobileLayout ? { x: 0, y: 0.5 } : { x: 0, y: 0 };
+  const diagonalEnd = isMobileLayout ? { x: 100, y: isShortMobileLayout ? 92 : 88 } : { x: 100, y: 100 };
   const getDiagonalPoint = (progress: number) => ({
     x: diagonalStart.x + (diagonalEnd.x - diagonalStart.x) * progress,
     y: diagonalStart.y + (diagonalEnd.y - diagonalStart.y) * progress,
@@ -603,12 +611,10 @@ const PremiumPreloader = ({
                 position: "absolute",
                 left: isMobileLayout ? "clamp(18px, 6vw, 28px)" : "clamp(18px, 4vw, 64px)",
                 right: isMobileLayout ? "clamp(18px, 6vw, 28px)" : "auto",
-                bottom: isMobileLayout
-                  ? "max(22px, calc(env(safe-area-inset-bottom) + 18px))"
-                  : "clamp(24px, 5.5vh, 68px)",
+                bottom: isMobileLayout ? mobileCounterBottom : "clamp(24px, 5.5vh, 68px)",
                 width: isMobileLayout ? "auto" : "min(78vw, 520px)",
                 maxWidth: isMobileLayout ? 420 : undefined,
-                overflow: "hidden",
+                overflow: isMobileLayout ? "visible" : "hidden",
               }}
             >
               <div
