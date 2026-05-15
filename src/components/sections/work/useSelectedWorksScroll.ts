@@ -21,6 +21,16 @@ const MARQUEE_CONFIG = {
   maxScrollBoost: 1100,
 };
 
+const MOBILE_KINETIC_CONFIG = {
+  entranceEndProgress: 0.34,
+  lineDrawStartProgress: 0.42,
+  lineDrawEndProgress: 1,
+  startTranslateX: 48,
+  startTranslateY: 2,
+  startRotation: 18,
+  startScale: 0.94,
+};
+
 interface MarqueeMotionState {
   backgroundLoopWidth: number;
   backgroundX: number;
@@ -449,7 +459,7 @@ function updateMobileThread({
   const threadLen = threadLenRef.current;
   if (!thread || threadLen <= 0 || !isMobile) return;
 
-  const drawP = voidProgress > 0.2 ? clamp((voidProgress - 0.2) / 0.8) : 0;
+  const drawP = getMobileKineticLineProgress(voidProgress);
   thread.style.strokeDasharray = `${threadLen}`;
   thread.style.strokeDashoffset = `${(threadLen * (1 - drawP)).toFixed(2)}`;
 
@@ -496,7 +506,7 @@ function updateKineticWheel({
 
     if (isMobile) {
       kineticWheel.style.transformOrigin = "50% 50%";
-      kineticWheel.style.transform = "translate3d(42vw, 2vh, 0) rotate(18deg) scale(0.94)";
+      kineticWheel.style.transform = `translate3d(${MOBILE_KINETIC_CONFIG.startTranslateX}vw, ${MOBILE_KINETIC_CONFIG.startTranslateY}vh, 0) rotate(${MOBILE_KINETIC_CONFIG.startRotation}deg) scale(${MOBILE_KINETIC_CONFIG.startScale})`;
       if (figureGroupRef.current) figureGroupRef.current.style.opacity = "1";
     } else {
       kineticWheel.style.transform = "rotate(180deg)";
@@ -514,11 +524,11 @@ function updateKineticWheel({
         : voidProgress <= 0.5
           ? 0.5 + 0.5 * ((voidProgress - 0.25) / 0.25)
           : 1;
-    const travelProgress = easeOutCubic(clamp(voidProgress / 0.74));
-    const translateX = lerp(42, 0, travelProgress);
-    const translateY = lerp(2, 0, travelProgress);
-    const rotation = lerp(18, 0, travelProgress);
-    const scale = lerp(0.94, 1, travelProgress);
+    const travelProgress = easeOutCubic(clamp(voidProgress / MOBILE_KINETIC_CONFIG.entranceEndProgress));
+    const translateX = lerp(MOBILE_KINETIC_CONFIG.startTranslateX, 0, travelProgress);
+    const translateY = lerp(MOBILE_KINETIC_CONFIG.startTranslateY, 0, travelProgress);
+    const rotation = lerp(MOBILE_KINETIC_CONFIG.startRotation, 0, travelProgress);
+    const scale = lerp(MOBILE_KINETIC_CONFIG.startScale, 1, travelProgress);
 
     kineticWheel.style.opacity = figOpacity.toFixed(3);
     kineticWheel.style.transformOrigin = "50% 50%";
@@ -560,6 +570,12 @@ function clamp(value: number) {
 
 function easeOutCubic(value: number) {
   return 1 - Math.pow(1 - value, 3);
+}
+
+function getMobileKineticLineProgress(voidProgress: number) {
+  const drawDistance = MOBILE_KINETIC_CONFIG.lineDrawEndProgress - MOBILE_KINETIC_CONFIG.lineDrawStartProgress;
+  if (drawDistance <= 0) return 1;
+  return clamp((voidProgress - MOBILE_KINETIC_CONFIG.lineDrawStartProgress) / drawDistance);
 }
 
 function lerp(start: number, end: number, progress: number) {
