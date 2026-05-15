@@ -26,12 +26,13 @@ const KineticWheel = ({
     className="kinetic-wheel pointer-events-none"
     style={{
       position: "fixed",
-      top: isMobile ? "50%" : "auto",
+      top: isMobile ? "0" : "auto",
       bottom: isMobile ? "auto" : "-18vh",
       left: "0",
       width: "100vw",
-      height: isMobile ? "100vw" : "auto",
-      marginTop: isMobile ? "calc(-50vw)" : "0",
+      height: isMobile ? "100dvh" : "auto",
+      minHeight: isMobile ? "100vh" : undefined,
+      marginTop: "0",
       zIndex: 0,
       visibility: "hidden",
       opacity: 0,
@@ -61,16 +62,16 @@ const MobileKineticWheel = ({
   textBuildRef,
   textDeliverRef,
 }: Omit<KineticWheelProps, "isMobile" | "kineticWheelRef">) => (
-  <svg viewBox="0 0 1500 2000" className="w-full h-full" style={{ overflow: "visible" }}>
+  <svg viewBox="0 0 900 1800" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ overflow: "visible" }}>
     <defs>
       <linearGradient id="line-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-        <stop offset="15%" stopColor="rgba(255,255,255,0.7)" />
-        <stop offset="85%" stopColor="rgba(255,255,255,0.7)" />
+        <stop offset="14%" stopColor="rgba(255,255,255,0.74)" />
+        <stop offset="86%" stopColor="rgba(255,255,255,0.74)" />
         <stop offset="100%" stopColor="rgba(255,255,255,0)" />
       </linearGradient>
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="8" result="coloredBlur" />
+        <feGaussianBlur stdDeviation="6" result="coloredBlur" />
         <feMerge>
           <feMergeNode in="coloredBlur" />
           <feMergeNode in="SourceGraphic" />
@@ -80,34 +81,34 @@ const MobileKineticWheel = ({
 
     <path
       ref={threadPathRef}
-      d="M 750,0 L 750,250 C 750,550 250,500 250,800 C 250,1100 1250,1050 1250,1350 C 1250,1650 750,1600 750,1900 L 750,3000"
+      d="M 450,-80 L 450,210 C 450,390 175,370 175,560 C 175,760 725,740 725,960 C 725,1160 450,1140 450,1340 L 450,1900"
       fill="none"
       stroke="url(#line-gradient)"
-      strokeWidth="10"
+      strokeWidth="8"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
 
     <g ref={figureGroupRef}>
-      <text ref={textAnalyzeRef} x="750" y="150" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dy=".3em">
+      <text ref={textAnalyzeRef} x="450" y="136" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dominantBaseline="middle">
         ANALYZE
       </text>
-      <circle cx="750" cy="250" r="15" fill="#ffffff" filter="url(#glow)" />
+      <circle cx="450" cy="210" r="12" fill="#ffffff" filter="url(#glow)" />
 
-      <text ref={textDesignRef} x="250" y="700" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dy=".3em">
+      <text ref={textDesignRef} x="205" y="500" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dominantBaseline="middle">
         DESIGN
       </text>
-      <circle cx="250" cy="800" r="15" fill="#ffffff" filter="url(#glow)" />
+      <circle cx="175" cy="560" r="12" fill="#ffffff" filter="url(#glow)" />
 
-      <text ref={textBuildRef} x="1250" y="1250" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dy=".3em">
+      <text ref={textBuildRef} x="690" y="900" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dominantBaseline="middle">
         BUILD
       </text>
-      <circle cx="1250" cy="1350" r="15" fill="#ffffff" filter="url(#glow)" />
+      <circle cx="725" cy="960" r="12" fill="#ffffff" filter="url(#glow)" />
 
-      <text ref={textDeliverRef} x="750" y="1800" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dy=".3em">
-        DELIVER
+      <text ref={textDeliverRef} x="450" y="1280" fill="#ffffff" style={mobileTextStyle} textAnchor="middle" dominantBaseline="middle">
+        DEPLOY
       </text>
-      <circle cx="750" cy="1900" r="20" fill="#ffffff" filter="url(#glow)" />
+      <circle cx="450" cy="1340" r="15" fill="#ffffff" filter="url(#glow)" />
     </g>
   </svg>
 );
@@ -148,8 +149,9 @@ const DesktopKineticWheel = () => (
 const mobileTextStyle = {
   fontFamily: "sans-serif",
   fontWeight: 800,
-  fontSize: "100px",
-  opacity: 0.3,
+  fontSize: "76px",
+  letterSpacing: "3px",
+  opacity: 0.24,
 };
 
 export default KineticWheel;

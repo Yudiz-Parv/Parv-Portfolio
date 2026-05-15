@@ -453,10 +453,10 @@ function updateMobileThread({
   thread.style.strokeDasharray = `${threadLen}`;
   thread.style.strokeDashoffset = `${(threadLen * (1 - drawP)).toFixed(2)}`;
 
-  animateText(textAnalyzeRef, drawP, 0.04);
-  animateText(textDesignRef, drawP, 0.2);
-  animateText(textBuildRef, drawP, 0.4);
-  animateText(textDeliverRef, drawP, 0.6);
+  animateText(textAnalyzeRef, drawP, 0.08);
+  animateText(textDesignRef, drawP, 0.3);
+  animateText(textBuildRef, drawP, 0.54);
+  animateText(textDeliverRef, drawP, 0.76);
 
   if (figureGroupRef.current && voidProgress < 0.8) {
     figureGroupRef.current.style.opacity = "1";
@@ -495,7 +495,8 @@ function updateKineticWheel({
     kineticWheel.style.visibility = "hidden";
 
     if (isMobile) {
-      kineticWheel.style.transform = "translate3d(0, 0, 0)";
+      kineticWheel.style.transformOrigin = "50% 50%";
+      kineticWheel.style.transform = "translate3d(42vw, 2vh, 0) rotate(18deg) scale(0.94)";
       if (figureGroupRef.current) figureGroupRef.current.style.opacity = "1";
     } else {
       kineticWheel.style.transform = "rotate(180deg)";
@@ -513,9 +514,15 @@ function updateKineticWheel({
         : voidProgress <= 0.5
           ? 0.5 + 0.5 * ((voidProgress - 0.25) / 0.25)
           : 1;
+    const travelProgress = easeOutCubic(clamp(voidProgress / 0.74));
+    const translateX = lerp(42, 0, travelProgress);
+    const translateY = lerp(2, 0, travelProgress);
+    const rotation = lerp(18, 0, travelProgress);
+    const scale = lerp(0.94, 1, travelProgress);
 
     kineticWheel.style.opacity = figOpacity.toFixed(3);
-    kineticWheel.style.transform = "translate3d(0, 0, 0)";
+    kineticWheel.style.transformOrigin = "50% 50%";
+    kineticWheel.style.transform = `translate3d(${translateX.toFixed(2)}vw, ${translateY.toFixed(2)}vh, 0) rotate(${rotation.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
 
     if (figureGroupRef.current && voidProgress >= 0.8) {
       const textFade = 1 - (voidProgress - 0.8) / 0.2;
@@ -532,20 +539,31 @@ function updateKineticWheel({
 function animateText(ref: RefObject<SVGTextElement>, drawProgress: number, targetProgress: number) {
   if (!ref.current) return;
 
-  const threshold = 0.15;
-  const dist = Math.abs(drawProgress - targetProgress);
-  const intensity = dist < threshold ? 1 - dist / threshold : 0;
-  const opacity = 0.3 + 0.7 * intensity;
-  const scale = 1 + 0.05 * intensity;
+  const revealProgress = clamp((drawProgress - targetProgress + 0.08) / 0.18);
+  const focusDistance = Math.abs(drawProgress - targetProgress);
+  const focus = focusDistance < 0.16 ? 1 - focusDistance / 0.16 : 0;
+  const easedReveal = easeOutCubic(revealProgress);
+  const opacity = 0.18 + easedReveal * 0.52 + focus * 0.3;
+  const scale = 0.92 + easedReveal * 0.08 + focus * 0.04;
+  const translateY = (1 - easedReveal) * 24;
 
   ref.current.style.opacity = opacity.toFixed(2);
-  ref.current.style.transform = `scale(${scale})`;
+  ref.current.style.transform = `translate3d(0, ${translateY.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
   ref.current.style.transformOrigin = "center";
   ref.current.style.transformBox = "fill-box";
+  ref.current.style.filter = focus > 0.05 ? `drop-shadow(0 0 ${(focus * 14).toFixed(1)}px rgba(255,255,255,0.45))` : "";
 }
 
 function clamp(value: number) {
   return Math.min(Math.max(value, 0), 1);
+}
+
+function easeOutCubic(value: number) {
+  return 1 - Math.pow(1 - value, 3);
+}
+
+function lerp(start: number, end: number, progress: number) {
+  return start + (end - start) * progress;
 }
 
 function getMarqueeLoopWidth(track: HTMLDivElement | null) {
