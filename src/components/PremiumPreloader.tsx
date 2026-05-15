@@ -35,8 +35,11 @@ type ResolvedColors = {
 };
 
 const completionStorageKey = "premium-preloader:full-complete";
+const completionEventName = "premium-preloader:complete";
 const exitEase = [0.76, 0, 0.24, 1] as [number, number, number, number];
 const counterEase = [0.16, 1, 0.3, 1] as [number, number, number, number];
+const curtainHoldMs = 360;
+const curtainExitDurationSeconds = 1.18;
 
 const defaultFont: CSSProperties = {
   fontFamily: "Inter, system-ui, sans-serif",
@@ -154,12 +157,12 @@ const PremiumPreloader = ({
   const effectiveDurationMs = isCurtainOnly
     ? shouldReduceMotion
       ? 80
-      : 220
+      : curtainHoldMs
     : (shouldReduceMotion ? 0.9 : safeDuration / safeSpeed) * 1000;
   const exitDurationSeconds = isCurtainOnly
     ? shouldReduceMotion
       ? 0.24
-      : 0.72
+      : curtainExitDurationSeconds
     : shouldReduceMotion
       ? 0.36
       : safeExitDuration;
@@ -333,6 +336,8 @@ const PremiumPreloader = ({
         }}
         onAnimationComplete={() => {
           if (isExiting) {
+            document.documentElement.dataset.preloaderComplete = "true";
+            window.dispatchEvent(new Event(completionEventName));
             setShouldRender(false);
           }
         }}

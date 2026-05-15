@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
+import { useLenis } from "lenis/react";
 
 import { BRAND, NAV_ITEMS, SOCIAL_LINKS } from "@/data/portfolio";
 
@@ -53,20 +54,58 @@ const socialVariants: Variants = {
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
+  const lenis = useLenis();
 
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.body.style.touchAction = "none"; // Critical for iOS Safari
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
+    if (!open) {
+      return;
     }
+
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY;
+    const wasLenisStopped = lenis?.isStopped ?? false;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
+    const previousBodyPosition = body.style.position;
+    const previousBodyTop = body.style.top;
+    const previousBodyLeft = body.style.left;
+    const previousBodyRight = body.style.right;
+    const previousBodyWidth = body.style.width;
+    const previousBodyTouchAction = body.style.touchAction;
+
+    lenis?.stop();
+    html.style.overflow = "hidden";
+    html.style.overscrollBehavior = "none";
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.touchAction = "none";
+
     return () => {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
+      html.style.overflow = previousHtmlOverflow;
+      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+      body.style.position = previousBodyPosition;
+      body.style.top = previousBodyTop;
+      body.style.left = previousBodyLeft;
+      body.style.right = previousBodyRight;
+      body.style.width = previousBodyWidth;
+      body.style.touchAction = previousBodyTouchAction;
+      window.scrollTo(0, scrollY);
+      lenis?.scrollTo(scrollY, { immediate: true, force: true });
+      if (!wasLenisStopped) {
+        lenis?.start();
+      }
     };
-  }, [open]);
+  }, [lenis, open]);
 
   const handleNavClick = () => {
     setOpen(false);
@@ -120,11 +159,11 @@ const Navigation = () => {
             initial="closed"
             animate="open"
             exit="closed"
-            className="fixed inset-0 z-[100] bg-black flex flex-col justify-between px-8 md:px-16 pt-16 pb-10 md:pt-20 md:pb-14"
+            className="fixed inset-0 z-[100] bg-[#f7f5ef] flex flex-col justify-between px-8 md:px-16 pt-16 pb-10 md:pt-20 md:pb-14"
           >
             {/* Socials row */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4 pt-10 md:pt-0">
-              <p className="text-sm text-white/70 uppercase tracking-widest font-mono mr-2">
+              <p className="text-sm text-black/55 uppercase tracking-widest font-mono mr-2">
                 Socials
               </p>
               {SOCIAL_LINKS.map((item, i) => (
@@ -138,7 +177,7 @@ const Navigation = () => {
                   initial="closed"
                   animate="open"
                   exit="closed"
-                  className="text-base md:text-lg font-medium text-white hover:opacity-40"
+                  className="text-base md:text-lg font-medium text-black hover:opacity-45"
                 >
                   {item.label}
                 </motion.a>
@@ -150,7 +189,7 @@ const Navigation = () => {
               {NAV_ITEMS.map((item, i) => (
                 <div
                   key={item.label}
-                  className="overflow-hidden border-b border-white/25 py-3 md:py-4"
+                  className="overflow-hidden border-b border-black/20 py-3 md:py-4"
                 >
                   <motion.a
                     href={item.href}
@@ -162,10 +201,10 @@ const Navigation = () => {
                     exit="closed"
                     className="flex items-baseline justify-between group cursor-pointer"
                   >
-                    <span className="text-5xl md:text-7xl lg:text-8xl font-semibold text-white uppercase tracking-tight leading-none group-hover:translate-x-3 transition-transform duration-300 ease-out">
+                    <span className="text-5xl md:text-7xl lg:text-8xl font-semibold text-black uppercase tracking-tight leading-none group-hover:translate-x-3 transition-transform duration-300 ease-out">
                       {item.label}
                     </span>
-                    <span className="text-xs text-white/55 font-mono tracking-widest self-start mt-2">
+                    <span className="text-xs text-black/45 font-mono tracking-widest self-start mt-2">
                       {item.number}
                     </span>
                   </motion.a>
@@ -178,7 +217,7 @@ const Navigation = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, transition: { delay: 1.2, duration: 0.8 } }}
               exit={{ opacity: 0, transition: { duration: 0.6 } }}
-              className="text-xs text-white/20 font-mono tracking-widest mt-8 md:mt-0 md:self-end"
+              className="text-xs text-black/30 font-mono tracking-widest mt-8 md:mt-0 md:self-end"
             >
               © {BRAND.year} {BRAND.name}
             </motion.p>
