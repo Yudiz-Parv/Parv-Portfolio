@@ -103,6 +103,11 @@ const resolveColors = ({
 
 const formatCounter = (value: number) => value.toString().padStart(3, "0");
 
+const getViewportSize = () => ({
+  width: typeof window === "undefined" ? 1280 : window.innerWidth,
+  height: typeof window === "undefined" ? 800 : window.innerHeight,
+});
+
 const hasCompletedFullPreloader = () => {
   if (typeof window === "undefined") {
     return false;
@@ -148,8 +153,11 @@ const PremiumPreloader = ({
   const [progressValue, setProgressValue] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const [shouldRender, setShouldRender] = useState(true);
+  const [viewportSize, setViewportSize] = useState(getViewportSize);
 
   const isCurtainOnly = mode === "curtain";
+  const isMobileLayout = viewportSize.width < 640;
+  const isShortMobileLayout = isMobileLayout && viewportSize.height < 720;
   const safeDuration = clamp(duration, 1, 6);
   const safeSpeed = clamp(speed, 0.5, 2);
   const safeExitDelay = clamp(exitDelay, 0, 800);
@@ -174,6 +182,43 @@ const PremiumPreloader = ({
     progressColor,
     trackColor,
   });
+  const responsiveCounterFont: CSSProperties = {
+    ...defaultFont,
+    ...font,
+    ...(isMobileLayout
+      ? {
+          fontSize: isShortMobileLayout ? "clamp(58px, 20vw, 82px)" : "clamp(64px, 21vw, 104px)",
+          lineHeight: 0.86,
+        }
+      : {}),
+  };
+  const responsiveProgressHeight = isMobileLayout ? clamp(progressHeight, 2, 3) : progressHeight;
+  const trackStrokeWidth = isMobileLayout ? 1.4 : 1;
+  const progressStrokes = {
+    outerGlow: responsiveProgressHeight + (isMobileLayout ? 12 : 22),
+    midGlow: responsiveProgressHeight + (isMobileLayout ? 6 : 11),
+    innerGlow: responsiveProgressHeight + (isMobileLayout ? 2 : 4),
+    headHalo: responsiveProgressHeight + (isMobileLayout ? 12 : 24),
+    headCore: responsiveProgressHeight + (isMobileLayout ? 5 : 9),
+    tipCore: responsiveProgressHeight + (isMobileLayout ? 2 : 3),
+    dotHalo: responsiveProgressHeight + (isMobileLayout ? 8 : 15),
+    dotCore: responsiveProgressHeight + (isMobileLayout ? 3 : 5),
+  };
+
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize(getViewportSize());
+    };
+
+    updateViewportSize();
+    window.addEventListener("resize", updateViewportSize, { passive: true });
+    window.addEventListener("orientationchange", updateViewportSize, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", updateViewportSize);
+      window.removeEventListener("orientationchange", updateViewportSize);
+    };
+  }, []);
 
   useEffect(() => {
     if (!shouldRender) {
@@ -249,25 +294,35 @@ const PremiumPreloader = ({
 
   const displayValue = formatCounter(counterValue);
 
-  // Compute SVG path endpoints directly from progress — avoids strokeDasharray pitfalls
-  const tipX = progressValue * 100;
-  const tipY = progressValue * 100;
-  const progressPath = progressValue > 0.001 ? `M0,0 L${tipX},${tipY}` : null;
+  // Compute SVG path endpoints directly from progress — avoids strokeDasharray pitfalls.
+  const diagonalStart = isMobileLayout ? { x: 0, y: 3 } : { x: 0, y: 0 };
+  const diagonalEnd = isMobileLayout ? { x: 100, y: 97 } : { x: 100, y: 100 };
+  const getDiagonalPoint = (progress: number) => ({
+    x: diagonalStart.x + (diagonalEnd.x - diagonalStart.x) * progress,
+    y: diagonalStart.y + (diagonalEnd.y - diagonalStart.y) * progress,
+  });
+  const getDiagonalPath = (startProgress: number, endProgress: number) => {
+    const start = getDiagonalPoint(startProgress);
+    const end = getDiagonalPoint(endProgress);
+
+    return `M${start.x},${start.y} L${end.x},${end.y}`;
+  };
+
+  const tip = getDiagonalPoint(progressValue);
+  const progressPath = progressValue > 0.001 ? getDiagonalPath(0, progressValue) : null;
 
   const HEAD = 0.09;
-  const headStartX = Math.max(0, progressValue - HEAD) * 100;
   const headPath =
     progressValue > HEAD
-      ? `M${headStartX},${headStartX} L${tipX},${tipY}`
+      ? getDiagonalPath(Math.max(0, progressValue - HEAD), progressValue)
       : progressPath;
 
   const TIP = 0.022;
-  const tipStartX = Math.max(0, progressValue - TIP) * 100;
   const tipPath =
     progressValue > TIP
-      ? `M${tipStartX},${tipStartX} L${tipX},${tipY}`
+      ? getDiagonalPath(Math.max(0, progressValue - TIP), progressValue)
       : progressPath;
-  const tipDotPath = progressValue > 0.025 ? `M${tipX},${tipY} l0.01,0.01` : null;
+  const tipDotPath = progressValue > 0.025 ? `M${tip.x},${tip.y} l0.01,0.01` : null;
 
   return (
     <motion.div
@@ -287,7 +342,8 @@ const PremiumPreloader = ({
         inset: 0,
         zIndex,
         width: "100vw",
-        height: "100vh",
+        height: isMobileLayout ? "100dvh" : "100vh",
+        minHeight: "100vh",
         boxSizing: "border-box",
         backgroundColor: "transparent",
         pointerEvents: "auto",
@@ -386,6 +442,7 @@ const PremiumPreloader = ({
                 width: "100%",
                 height: "100%",
                 pointerEvents: "none",
+                overflow: "visible",
               }}
             >
               <defs>
@@ -403,10 +460,15 @@ const PremiumPreloader = ({
 
               {/* Static black base track — always full diagonal */}
               <line
-                x1="0" y1="0" x2="100" y2="100"
+                x1={diagonalStart.x}
+                y1={diagonalStart.y}
+                x2={diagonalEnd.x}
+                y2={diagonalEnd.y}
                 stroke={colors.trackColor}
-                strokeWidth="1"
+                strokeWidth={trackStrokeWidth}
+                strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
+                shapeRendering="geometricPrecision"
               />
 
               {/* Progress fill — grows from top-left corner as load advances */}
@@ -422,7 +484,7 @@ const PremiumPreloader = ({
                   <path
                     d={progressPath}
                     stroke="#ff7030"
-                    strokeWidth={progressHeight + 22}
+                    strokeWidth={progressStrokes.outerGlow}
                     strokeLinecap="round"
                     vectorEffect="non-scaling-stroke"
                     fill="none"
@@ -432,7 +494,7 @@ const PremiumPreloader = ({
                   <path
                     d={progressPath}
                     stroke="#ff7030"
-                    strokeWidth={progressHeight + 11}
+                    strokeWidth={progressStrokes.midGlow}
                     strokeLinecap="round"
                     vectorEffect="non-scaling-stroke"
                     fill="none"
@@ -442,7 +504,7 @@ const PremiumPreloader = ({
                   <path
                     d={progressPath}
                     stroke="#ff7030"
-                    strokeWidth={progressHeight + 4}
+                    strokeWidth={progressStrokes.innerGlow}
                     strokeLinecap="round"
                     vectorEffect="non-scaling-stroke"
                     fill="none"
@@ -452,7 +514,7 @@ const PremiumPreloader = ({
                   <path
                     d={progressPath}
                     stroke="url(#pldr-core-grad)"
-                    strokeWidth={progressHeight}
+                    strokeWidth={responsiveProgressHeight}
                     strokeLinecap="round"
                     vectorEffect="non-scaling-stroke"
                     fill="none"
@@ -466,7 +528,7 @@ const PremiumPreloader = ({
                       <path
                         d={headPath}
                         stroke="#ff9050"
-                        strokeWidth={progressHeight + 24}
+                        strokeWidth={progressStrokes.headHalo}
                         strokeLinecap="round"
                         vectorEffect="non-scaling-stroke"
                         fill="none"
@@ -479,7 +541,7 @@ const PremiumPreloader = ({
                       <path
                         d={headPath}
                         stroke="url(#pldr-tip-grad)"
-                        strokeWidth={progressHeight + 9}
+                        strokeWidth={progressStrokes.headCore}
                         strokeLinecap="round"
                         vectorEffect="non-scaling-stroke"
                         fill="none"
@@ -493,7 +555,7 @@ const PremiumPreloader = ({
                         <path
                           d={tipPath}
                           stroke="#fff6ee"
-                          strokeWidth={progressHeight + 3}
+                          strokeWidth={progressStrokes.tipCore}
                           strokeLinecap="round"
                           vectorEffect="non-scaling-stroke"
                           fill="none"
@@ -508,7 +570,7 @@ const PremiumPreloader = ({
                           <path
                             d={tipDotPath}
                             stroke="#ff7a32"
-                            strokeWidth={progressHeight + 15}
+                            strokeWidth={progressStrokes.dotHalo}
                             strokeLinecap="round"
                             vectorEffect="non-scaling-stroke"
                             fill="none"
@@ -517,7 +579,7 @@ const PremiumPreloader = ({
                           <path
                             d={tipDotPath}
                             stroke="#fffaf4"
-                            strokeWidth={progressHeight + 5}
+                            strokeWidth={progressStrokes.dotCore}
                             strokeLinecap="round"
                             vectorEffect="non-scaling-stroke"
                             fill="none"
@@ -539,20 +601,24 @@ const PremiumPreloader = ({
             <div
               style={{
                 position: "absolute",
-                left: "clamp(18px, 4vw, 64px)",
-                bottom: "clamp(24px, 5.5vh, 68px)",
-                width: "min(78vw, 520px)",
+                left: isMobileLayout ? "clamp(18px, 6vw, 28px)" : "clamp(18px, 4vw, 64px)",
+                right: isMobileLayout ? "clamp(18px, 6vw, 28px)" : "auto",
+                bottom: isMobileLayout
+                  ? "max(22px, calc(env(safe-area-inset-bottom) + 18px))"
+                  : "clamp(24px, 5.5vh, 68px)",
+                width: isMobileLayout ? "auto" : "min(78vw, 520px)",
+                maxWidth: isMobileLayout ? 420 : undefined,
                 overflow: "hidden",
               }}
             >
               <div
                 style={{
-                  ...defaultFont,
-                  ...font,
+                  ...responsiveCounterFont,
                   color: colors.counterColor,
                   position: "relative",
                   display: "block",
                   fontVariantNumeric: "tabular-nums",
+                  maxWidth: "100%",
                   userSelect: "none",
                   textShadow: shouldReduceMotion
                     ? "none"
@@ -565,8 +631,8 @@ const PremiumPreloader = ({
               <div
                 aria-hidden="true"
                 style={{
-                  marginTop: "clamp(8px, 1.2vh, 14px)",
-                  width: "clamp(46px, 9vw, 116px)",
+                  marginTop: isMobileLayout ? "clamp(7px, 1.4vh, 11px)" : "clamp(8px, 1.2vh, 14px)",
+                  width: isMobileLayout ? "clamp(42px, 16vw, 74px)" : "clamp(46px, 9vw, 116px)",
                   height: 2,
                   background:
                     "linear-gradient(90deg, #f08d62 0%, rgba(255, 122, 60, 0.42) 58%, rgba(240, 141, 98, 0) 100%)",
