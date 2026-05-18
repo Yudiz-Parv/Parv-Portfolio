@@ -28,7 +28,7 @@ const Index = () => {
       <HeroSection />
 
       <div className="relative z-20 w-full bg-transparent">
-        <div id="about" className="h-screen w-full pointer-events-none" />
+        <div id="about" className="h-[180vh] w-full pointer-events-none" />
 
         <div id="work" className="bg-black text-white relative z-20">
           <SelectedWorksSection />
