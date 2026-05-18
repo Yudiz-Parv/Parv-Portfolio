@@ -142,7 +142,7 @@ const FooterSection = () => {
         aria-hidden="true"
       >
         <picture className="footer-signature-picture">
-          <source media="(max-width: 767px)" srcSet="/parv-resposive.png" />
+          <source media="(max-width: 767px)" srcSet="/parvs.png" />
           <img
             src="/parvs.png"
             alt=""
