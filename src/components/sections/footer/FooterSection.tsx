@@ -83,7 +83,7 @@ const FooterSection = () => {
   return (
     <footer
       ref={footerRef}
-      className="footer-bg text-white font-sans pt-10 md:pt-20 border-t border-white/20 h-screen flex flex-col"
+      className="footer-bg text-white font-sans pt-24 sm:pt-20 md:pt-20 border-t border-white/20 h-screen flex flex-col"
     >
       {footerBlobs.map((blob) => (
         <div key={blob.className} className={blob.className} />
@@ -91,7 +91,7 @@ const FooterSection = () => {
       <div className="footer-glow" />
 
       <motion.div
-        className="footer-top-grid relative z-10 px-4 sm:px-6 md:px-12 lg:px-16 max-w-[1600px] mx-auto w-full grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-8 md:gap-x-12 shrink-0"
+        className="footer-top-grid relative z-10 px-4 sm:px-6 md:px-12 lg:px-16 max-w-[1600px] mx-auto w-full grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-6 sm:gap-y-8 md:gap-x-12 shrink-0"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -100,7 +100,7 @@ const FooterSection = () => {
         {FOOTER_COLUMNS.slice(0, 2).map((column) => (
           <FooterColumn key={column.title} column={column} />
         ))}
-        <motion.div variants={itemVariants} className="col-span-2 md:col-span-1 flex flex-col h-full justify-between">
+        <motion.div variants={itemVariants} className="col-span-1 min-[420px]:col-span-2 md:col-span-1 flex flex-col h-full justify-between">
           <FooterColumn column={FOOTER_COLUMNS[2]} />
         </motion.div>
       </motion.div>
@@ -120,13 +120,13 @@ const FooterSection = () => {
         </motion.p>
         <motion.h2
           variants={itemVariants}
-          className="mt-3 font-sans text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black uppercase leading-[0.9] tracking-normal text-white"
+          className="mt-3 font-sans text-[1.85rem] min-[380px]:text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black uppercase leading-[0.88] md:leading-[0.9] tracking-normal text-white"
         >
           Let's build
           <br />
           something sharp
         </motion.h2>
-        <motion.div variants={itemVariants} className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <motion.div variants={itemVariants} className="footer-cta-row mt-6 flex flex-wrap items-center justify-center gap-3">
           <a href={`mailto:${BRAND.email}`} className="footer-cta-button footer-cta-button-primary">
             Email me <span aria-hidden="true">↗</span>
           </a>
@@ -141,12 +141,15 @@ const FooterSection = () => {
         className="footer-text-shell"
         aria-hidden="true"
       >
-        <img
-          src="/parvs.png"
-          alt="Parv Gosani"
-          className="footer-signature-image"
-          draggable={false}
-        />
+        <picture className="footer-signature-picture">
+          <source media="(max-width: 767px)" srcSet="/parv-resposive.png" />
+          <img
+            src="/parvs.png"
+            alt=""
+            className="footer-signature-image"
+            draggable={false}
+          />
+        </picture>
       </motion.div>
     </footer>
   );
