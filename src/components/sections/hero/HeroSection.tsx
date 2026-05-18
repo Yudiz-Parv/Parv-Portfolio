@@ -15,9 +15,9 @@ const socialIcons = {
 
 const preloaderCompleteEventName = "premium-preloader:complete";
 const introEase = [0.16, 1, 0.3, 1] as [number, number, number, number];
-const textRevealEase = [0.77, 0, 0.175, 1] as [number, number, number, number];
+const premiumRevealEase = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const headlineRevealLines = ["Building software", "that feels alive"];
-const heroRevealDelayMs = 50;
+const heroRevealDelayMs = 350;
 
 const getLinkTarget = (href: string) => (href.startsWith("mailto") ? "_self" : "_blank");
 
@@ -195,9 +195,9 @@ const HeroSection = () => {
       opacity: 1,
       y: 0,
       transition: {
-        duration: shouldReduceMotion ? 0.18 : 0.82,
+        duration: shouldReduceMotion ? 0.18 : 0.9,
         delay: shouldReduceMotion ? 0.02 : index * 0.08,
-        ease: shouldReduceMotion ? "easeOut" : textRevealEase,
+        ease: shouldReduceMotion ? "easeOut" : premiumRevealEase,
       },
     }),
   };
