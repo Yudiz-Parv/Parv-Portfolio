@@ -128,6 +128,11 @@ const markFullPreloaderComplete = () => {
   }
 };
 
+const announcePreloaderComplete = () => {
+  document.documentElement.dataset.preloaderComplete = "true";
+  window.dispatchEvent(new Event(completionEventName));
+};
+
 const PremiumPreloader = ({
   theme = "dark",
   backgroundColor = "#FFFFFF",
@@ -251,6 +256,7 @@ const PremiumPreloader = ({
   useEffect(() => {
     if (isCurtainOnly) {
       const exitTimer = window.setTimeout(() => {
+        announcePreloaderComplete();
         setIsExiting(true);
       }, effectiveDurationMs);
 
@@ -284,6 +290,7 @@ const PremiumPreloader = ({
       setProgressValue(1);
       exitTimer = window.setTimeout(() => {
         markFullPreloaderComplete();
+        announcePreloaderComplete();
         setIsExiting(true);
       }, safeExitDelay);
     };
@@ -400,8 +407,6 @@ const PremiumPreloader = ({
         }}
         onAnimationComplete={() => {
           if (isExiting) {
-            document.documentElement.dataset.preloaderComplete = "true";
-            window.dispatchEvent(new Event(completionEventName));
             setShouldRender(false);
           }
         }}
