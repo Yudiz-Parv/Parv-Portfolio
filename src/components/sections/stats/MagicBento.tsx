@@ -36,10 +36,10 @@ const MagicBento = () => {
       section.style.setProperty("--stats-lens-orb-opacity", "0");
       section.style.setProperty("--stats-lens-rim-opacity", "0");
       section.style.setProperty("--stats-lens-eye-opacity", "1");
-      section.style.setProperty("--stats-lens-fill", "1");
+      section.style.setProperty("--stats-lens-fill", "0");
       section.style.setProperty("--stats-lens-ink", "0, 0, 0");
       section.style.setProperty("--stats-lens-contrast", "255, 255, 255");
-      section.style.setProperty("--stats-lens-bg", "255, 255, 255");
+      section.style.setProperty("--stats-lens-bg", "0, 0, 0");
       if (!canCountRef.current) {
         canCountRef.current = true;
         setCanCount(true);
@@ -52,14 +52,15 @@ const MagicBento = () => {
     const openProgress = easeOutCubic(clamp((rawProgress - 0.12) / 0.56));
     const settleProgress = easeOutCubic(clamp((rawProgress - 0.48) / 0.3));
     const orbFadeProgress = easeOutCubic(clamp((rawProgress - 0.58) / 0.18));
-    const fillProgress = easeOutCubic(clamp((rawProgress - 0.78) / 0.2));
+    // Keep the terminal frame as an open lens on black instead of washing the viewport white.
+    const fillProgress = 0;
     const rimExitProgress = easeOutCubic(clamp((rawProgress - 0.82) / 0.16));
     const eyeOpacity = openProgress;
     const rimOpacity = Math.min(openProgress * 2.4, 1) * (1 - rimExitProgress);
     const darkInkMix = Math.max(openProgress, fillProgress);
     const inkValue = Math.round(255 * (1 - darkInkMix));
     const contrastValue = 255 - inkValue;
-    const bgValue = Math.round(255 * fillProgress);
+    const bgValue = 0;
 
     if (!canCountRef.current && rawProgress > 0.42) {
       canCountRef.current = true;
