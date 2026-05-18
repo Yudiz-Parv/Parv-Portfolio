@@ -57,7 +57,7 @@ const SelectedWorksSection = () => {
         whileInView="visible"
         viewport={{ once: true, amount: 0.36 }}
       >
-        <span className="work-reveal-header__kicker">(Portfolio)</span>
+        {/* <span className="work-reveal-header__kicker">(Portfolio)</span> */}
         <h2 className="work-reveal-header__title" aria-label="Projects I Worked On">
           {PROJECT_HEADER_LINES.map((line, index) => (
             <span
