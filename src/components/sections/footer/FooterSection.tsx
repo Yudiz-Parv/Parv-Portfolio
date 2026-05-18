@@ -17,9 +17,6 @@ const footerBlobs = [
 ];
 
 const linkedInHref = SOCIAL_LINKS.find(({ label }) => label === "LinkedIn")?.href ?? "#";
-const footerNameParts = BRAND.legalName.split(" ");
-const footerFirstName = footerNameParts[0] ?? BRAND.name;
-const footerLastName = footerNameParts.slice(1).join(" ");
 
 const FooterColumn = ({ column }: { column: FooterColumnConfig }) => (
   <motion.div variants={itemVariants} className="footer-column flex flex-col gap-1">
@@ -144,11 +141,12 @@ const FooterSection = () => {
         className="footer-text-shell"
         aria-hidden="true"
       >
-        <div className="footer-text footer-text-desktop" data-text={BRAND.legalName}>{BRAND.legalName}</div>
-        <div className="footer-text footer-text-mobile">
-          <span>{footerFirstName}</span>
-          {footerLastName ? <span>{footerLastName}</span> : null}
-        </div>
+        <img
+          src="/parvs.png"
+          alt="Parv Gosani"
+          className="footer-signature-image"
+          draggable={false}
+        />
       </motion.div>
     </footer>
   );
