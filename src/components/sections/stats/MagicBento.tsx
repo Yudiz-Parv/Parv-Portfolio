@@ -95,6 +95,10 @@ const MagicBento = () => {
     const rimOpacity = Math.min(openProgress * 2.4, 1) * (1 - Math.max(rimExitProgress, closeProgress * 0.78));
     const closeCircleOpacity = Math.sin(closeProgress * Math.PI) * 0.42;
     const closeCircleScale = 0.78 + closeProgress * 0.42;
+    const introOrbOpacity = 1 - orbFadeProgress;
+    const outroOrbOpacity = easeOutCubic(clamp((closeProgress - 0.72) / 0.22));
+    const orbOpacity = Math.max(introOrbOpacity, outroOrbOpacity);
+    const orbScale = outroOrbOpacity > introOrbOpacity ? 0.82 : 0.82 + openProgress * 0.18;
     const darkInkMix = Math.max(openProgress, fillProgress);
     const inkValue = Math.round(255 * (1 - darkInkMix));
     const contrastValue = 255 - inkValue;
@@ -113,8 +117,8 @@ const MagicBento = () => {
     section.style.setProperty("--stats-lens-content-y", `${(((1 - settleProgress) * 22) - closeProgress * 18).toFixed(2)}px`);
     section.style.setProperty("--stats-lens-content-scale", (0.965 + openProgress * 0.035 - closeProgress * 0.018).toFixed(4));
     section.style.setProperty("--stats-lens-ghost-scale", (1.32 - openProgress * 0.24 + closeProgress * 0.08).toFixed(4));
-    section.style.setProperty("--stats-lens-orb-scale", (0.82 + openProgress * 0.18).toFixed(4));
-    section.style.setProperty("--stats-lens-orb-opacity", (1 - orbFadeProgress).toFixed(4));
+    section.style.setProperty("--stats-lens-orb-scale", orbScale.toFixed(4));
+    section.style.setProperty("--stats-lens-orb-opacity", orbOpacity.toFixed(4));
     section.style.setProperty("--stats-lens-rim-opacity", rimOpacity.toFixed(4));
     section.style.setProperty("--stats-lens-eye-opacity", eyeOpacity.toFixed(4));
     section.style.setProperty("--stats-lens-close", closeProgress.toFixed(4));
