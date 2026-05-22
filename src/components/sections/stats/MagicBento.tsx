@@ -10,9 +10,12 @@ import "./MagicBento.css";
 
 const clamp = (value: number, min = 0, max = 1) => Math.min(Math.max(value, min), max);
 const easeOutCubic = (value: number) => 1 - Math.pow(1 - value, 3);
-const easeInOutCubic = (value: number) => (
-  value < 0.5 ? 4 * value * value * value : 1 - Math.pow(-2 * value + 2, 3) / 2
-);
+const smootherStep = (value: number) => value * value * value * (value * (value * 6 - 15) + 10);
+
+const CLOSE_SCROLL_START = 0.48;
+const CLOSE_SCROLL_DISTANCE = 0.5;
+const INFINITY_PATH =
+  "M58 58C58 34 84 34 110 58C136 82 162 82 162 58C162 34 136 34 110 58C84 82 58 82 58 58Z";
 
 const MagicBento = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -58,12 +61,12 @@ const MagicBento = () => {
     const openProgress = easeOutCubic(clamp((rawProgress - 0.12) / 0.56));
     const settleProgress = easeOutCubic(clamp((rawProgress - 0.48) / 0.3));
     const orbFadeProgress = easeOutCubic(clamp((rawProgress - 0.3) / 0.16));
-    const closeProgress = easeInOutCubic(clamp((rawProgress - 0.82) / 0.18));
+    const closeProgress = smootherStep(clamp((rawProgress - CLOSE_SCROLL_START) / CLOSE_SCROLL_DISTANCE));
     const apertureProgress = openProgress * (1 - closeProgress);
     // Keep the blink on black instead of washing the viewport white during the handoff.
     const fillProgress = 0;
-    const rimExitProgress = easeOutCubic(clamp((rawProgress - 0.9) / 0.08));
-    const contentExitProgress = easeOutCubic(clamp((rawProgress - 0.86) / 0.12));
+    const rimExitProgress = easeOutCubic(clamp((closeProgress - 0.35) / 0.65));
+    const contentExitProgress = easeOutCubic(clamp((closeProgress - 0.2) / 0.8));
     const eyeOpacity = openProgress * (1 - closeProgress * 0.12);
     const rimOpacity = Math.min(openProgress * 2.4, 1) * (1 - Math.max(rimExitProgress, closeProgress * 0.78));
     const closeCircleOpacity = Math.sin(closeProgress * Math.PI) * 0.42;
@@ -122,7 +125,9 @@ const MagicBento = () => {
 
   useLenis(({ scroll }) => {
     window.cancelAnimationFrame(frameRef.current);
-    frameRef.current = window.requestAnimationFrame(() => renderProgress(scroll));
+    frameRef.current = window.requestAnimationFrame(() => {
+      renderProgress(scroll);
+    });
   });
 
   return (
@@ -164,6 +169,8 @@ const MagicBento = () => {
 
 const SwissItem = ({ item, canCount }: { item: StatItem; canCount: boolean }) => {
   const { ref, count } = useCountOnVisible(item.value, 1200, canCount);
+  const isInfiniteValue = !Number.isFinite(item.value);
+  const isInfinityActive = isInfiniteValue && !Number.isFinite(count);
 
   return (
     <div ref={ref} className="stats-lens-item">
@@ -171,9 +178,28 @@ const SwissItem = ({ item, canCount }: { item: StatItem; canCount: boolean }) =>
         {item.label}
       </span>
 
-      <h3 className="stats-lens-item__value">
-        {count.toLocaleString()}
-        {item.suffix}
+      <h3
+        className={[
+          "stats-lens-item__value",
+          isInfiniteValue ? "stats-lens-item__value--infinity" : "",
+          isInfinityActive ? "is-active" : "",
+        ].filter(Boolean).join(" ")}
+      >
+        {isInfiniteValue ? (
+          <span className="stats-lens-infinity" role="img" aria-label="Infinite">
+            <svg className="stats-lens-infinity__svg" viewBox="0 0 220 116" aria-hidden="true" focusable="false">
+              <path className="stats-lens-infinity__track" d={INFINITY_PATH} pathLength={100} />
+              <path className="stats-lens-infinity__core" d={INFINITY_PATH} pathLength={100} />
+              <path className="stats-lens-infinity__echo" d={INFINITY_PATH} pathLength={100} />
+              <path className="stats-lens-infinity__highlight" d={INFINITY_PATH} pathLength={100} />
+            </svg>
+          </span>
+        ) : (
+          <>
+            {count.toLocaleString()}
+            {item.suffix}
+          </>
+        )}
       </h3>
 
       <p className="stats-lens-item__description">
