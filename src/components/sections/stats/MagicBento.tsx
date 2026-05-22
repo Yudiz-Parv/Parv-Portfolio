@@ -56,7 +56,7 @@ const MagicBento = () => {
     if (shouldReduceMotion) {
       section.style.setProperty("--stats-lens-open", "1");
       section.style.setProperty("--stats-lens-height", "118%");
-      section.style.setProperty("--stats-lens-radius-y", "61%");
+      section.style.setProperty("--stats-lens-scale-y", "1");
       section.style.setProperty("--stats-lens-blur", "0px");
       section.style.setProperty("--stats-lens-content-opacity", "1");
       section.style.setProperty("--stats-lens-content-y", "0px");
@@ -107,8 +107,8 @@ const MagicBento = () => {
 
     section.style.setProperty("--stats-lens-open", apertureProgress.toFixed(4));
     section.style.setProperty("--stats-lens-height", `${(apertureProgress * 122).toFixed(2)}%`);
-    section.style.setProperty("--stats-lens-radius-y", `${Math.max(apertureProgress * 61, 0.1).toFixed(2)}%`);
-    section.style.setProperty("--stats-lens-blur", `${(8 * (1 - openProgress) + closeProgress * 1.5).toFixed(2)}px`);
+    section.style.setProperty("--stats-lens-scale-y", Math.max(apertureProgress, 0.001).toFixed(4));
+    section.style.setProperty("--stats-lens-blur", `${(12 * (1 - openProgress) + closeProgress * 3).toFixed(2)}px`);
     section.style.setProperty("--stats-lens-content-opacity", (introProgress * (0.28 + openProgress * 0.72) * (1 - contentExitProgress)).toFixed(4));
     section.style.setProperty("--stats-lens-content-y", `${(((1 - settleProgress) * 22) - closeProgress * 18).toFixed(2)}px`);
     section.style.setProperty("--stats-lens-content-scale", (0.965 + openProgress * 0.035 - closeProgress * 0.018).toFixed(4));
