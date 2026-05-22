@@ -14,6 +14,7 @@ const smootherStep = (value: number) => value * value * value * (value * (value 
 
 const CLOSE_SCROLL_START = 0.48;
 const CLOSE_SCROLL_DISTANCE = 0.5;
+const MOBILE_BREAKPOINT = 768;
 const INFINITY_PATH =
   "M58 58C58 34 84 34 110 58C136 82 162 82 162 58C162 34 136 34 110 58C84 82 58 82 58 58Z";
 
@@ -22,9 +23,31 @@ const MagicBento = () => {
   const sectionTopRef = useRef(0);
   const sectionRangeRef = useRef(1);
   const frameRef = useRef(0);
+  const resizeFrameRef = useRef(0);
+  const viewportWidthRef = useRef(0);
+  const viewportHeightRef = useRef(0);
   const canCountRef = useRef(false);
   const [canCount, setCanCount] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+
+  const getMeasuredViewportHeight = useCallback(() => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const previousWidth = viewportWidthRef.current;
+    const previousHeight = viewportHeightRef.current || height;
+    const isMobile = width < MOBILE_BREAKPOINT;
+    const widthChanged = Math.abs(width - previousWidth) > 1;
+
+    viewportWidthRef.current = width;
+
+    if (!isMobile || widthChanged) {
+      viewportHeightRef.current = height;
+      return height;
+    }
+
+    viewportHeightRef.current = Math.min(previousHeight, height);
+    return viewportHeightRef.current;
+  }, []);
 
   const renderProgress = useCallback((scroll: number) => {
     const section = sectionRef.current;
@@ -33,6 +56,7 @@ const MagicBento = () => {
     if (shouldReduceMotion) {
       section.style.setProperty("--stats-lens-open", "1");
       section.style.setProperty("--stats-lens-height", "118%");
+      section.style.setProperty("--stats-lens-radius-y", "61%");
       section.style.setProperty("--stats-lens-blur", "0px");
       section.style.setProperty("--stats-lens-content-opacity", "1");
       section.style.setProperty("--stats-lens-content-y", "0px");
@@ -83,7 +107,8 @@ const MagicBento = () => {
 
     section.style.setProperty("--stats-lens-open", apertureProgress.toFixed(4));
     section.style.setProperty("--stats-lens-height", `${(apertureProgress * 122).toFixed(2)}%`);
-    section.style.setProperty("--stats-lens-blur", `${(12 * (1 - openProgress) + closeProgress * 3).toFixed(2)}px`);
+    section.style.setProperty("--stats-lens-radius-y", `${Math.max(apertureProgress * 61, 0.1).toFixed(2)}%`);
+    section.style.setProperty("--stats-lens-blur", `${(8 * (1 - openProgress) + closeProgress * 1.5).toFixed(2)}px`);
     section.style.setProperty("--stats-lens-content-opacity", (introProgress * (0.28 + openProgress * 0.72) * (1 - contentExitProgress)).toFixed(4));
     section.style.setProperty("--stats-lens-content-y", `${(((1 - settleProgress) * 22) - closeProgress * 18).toFixed(2)}px`);
     section.style.setProperty("--stats-lens-content-scale", (0.965 + openProgress * 0.035 - closeProgress * 0.018).toFixed(4));
@@ -105,21 +130,29 @@ const MagicBento = () => {
     const section = sectionRef.current;
     if (!section) return;
 
+    const viewportHeight = getMeasuredViewportHeight();
     sectionTopRef.current = section.getBoundingClientRect().top + window.scrollY;
-    sectionRangeRef.current = Math.max(section.offsetHeight - window.innerHeight, 1);
+    sectionRangeRef.current = Math.max(section.offsetHeight - viewportHeight, 1);
     renderProgress(window.scrollY);
-  }, [renderProgress]);
+  }, [getMeasuredViewportHeight, renderProgress]);
 
   useEffect(() => {
     measure();
     const measureTimer = window.setTimeout(measure, 150);
+    const scheduleMeasure = () => {
+      window.cancelAnimationFrame(resizeFrameRef.current);
+      resizeFrameRef.current = window.requestAnimationFrame(measure);
+    };
 
-    window.addEventListener("resize", measure, { passive: true });
+    window.addEventListener("resize", scheduleMeasure, { passive: true });
+    window.addEventListener("orientationchange", scheduleMeasure, { passive: true });
 
     return () => {
       window.clearTimeout(measureTimer);
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", scheduleMeasure);
+      window.removeEventListener("orientationchange", scheduleMeasure);
       window.cancelAnimationFrame(frameRef.current);
+      window.cancelAnimationFrame(resizeFrameRef.current);
     };
   }, [measure]);
 
